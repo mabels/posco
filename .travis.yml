@@ -1,0 +1,9 @@
+language: node_js
+dist: trusty
+
+script:
+    - npm install
+    - tsd install websocket
+    - tsd install chai
+    - tsd install mocha
+    - npm test

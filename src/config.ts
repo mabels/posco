@@ -18,7 +18,7 @@ class Config {
   public static read(fname: string) : Config {
     let ret = new Config();
     let obj = JSON.parse(fs.readFileSync(fname).toString());
-    ret.tunator = Tunator.fromJson(obj);
+    ret.tunator = Tunator.fromJson(obj.tunator||{});
     return ret;
   }
 }

@@ -2,6 +2,11 @@
  export class RouteVia {
   public dest: string;
   public via: string;
+  public constructor(dest: string = "", via: string = "") {
+    this.dest = dest;
+    this.via = via;
+  }
+
   public isValid() : boolean {
     return IfAddrs.isValidWithPrefix(this.dest) &&
           IfAddrs.isValidWithoutPrefix(this.via);
@@ -35,6 +40,9 @@ export class IfAddrs {
     return [slash[0], slash[1]];
   }
   static isPrefixValid(af: ProtoFamily, sPrefix: string) : boolean {
+    if (sPrefix == null) {
+      return false;
+    }
     if (sPrefix.length == 0) {
       return true;
     }
@@ -53,20 +61,87 @@ export class IfAddrs {
 
   public static isValidWithoutPrefix(addr: string) : boolean {
     let slash = addr.split("/");
-    if (slash.length == 1) {
+    if (slash.length != 1) {
       return false;
     }
     return IfAddrs.isValidWithPrefix(addr);
   }
+  public static splitToIpv4(addr: string) : Number[] {
+    let dots = addr.split(".");
+    if (dots.length < 2) {
+      return null;
+    }
+    let parts = Array<Number>();
+    for (let part of dots) {
+      if (!/^\d+$/.test(part)) {
+        return null; 
+      }
+      let num = parseInt(part, 10);
+      if (isNaN(num)) {
+        return null;
+      } 
+      if (num < 0 || 256 <= num) {
+        return null;
+      }
+      parts.push(num);
+    }
+    return parts;
+  }
+  public static split_on_colon(addr: string) : Number[] {
+    let ret = Array<Number>();
+    let parts = addr.split(":");
+    if (parts.length == 0) {
+      ret.push(0);
+      return ret;
+    }
+    for (let part of parts) {
+      if (!/^[0-9A-Fa-f]+$/.test(part)) {
+        return null;
+      }
+      let num = parseInt(part, 16);
+      if (isNaN(num)) {
+        return null;
+      }
+      if (num < 0 || 65536 <= num) {
+        return null;
+      }
+      ret.push(num);
+    }
+    return ret;
+  }
+  public static splitToIpv6(addr: string) : Number[] {
+        let pre_post = addr.split("::");
+        if (pre_post.length > 2) {
+          return null;
+        }
+        if (pre_post.length == 2) {
+            let pre = IfAddrs.split_on_colon(pre_post[0]);
+            if (!pre) {
+              return null;
+            }
+            let post = IfAddrs.split_on_colon(pre_post[1]);
+            if (!post) {
+              return null;
+            }
+            let zeros = Array<Number>();
+            for (let i = 0; i < 128/16 - pre.length - post.length; ++i) {
+              zeros.push(0);
+            }
+            return pre.concat(zeros.concat(post));
+        }
+        return IfAddrs.split_on_colon(addr);
+  }
   public static isValidWithPrefix(addr: string) : boolean {
-    // let sp = IfAddrs.splitPrefix(addr);
-    // if (inet_pton(AF_INET, sp.first.c_str(), &ipv4_dst) == 1) {
-    //   return isPrefixValid(AF_INET, sp.second);
-    // }
-    // struct in6_addr ipv6_dst;
-    // if (inet_pton(AF_INET6, sp.first.c_str(), &ipv6_dst) == 1) {
-    //   return isPrefixValid(AF_INET6, sp.second);
-    // }
+    let sp = IfAddrs.splitPrefix(addr);
+    if (sp[0].length == 0) {
+      return false;
+    }
+    if (IfAddrs.splitToIpv4(sp[0])) {
+      return IfAddrs.isPrefixValid(ProtoFamily.AF_INET, sp[1]);
+    }
+    if (IfAddrs.splitToIpv6(sp[0])) {
+     return IfAddrs.isPrefixValid(ProtoFamily.AF_INET6, sp[1]);
+    }
     return false;
   }
 
@@ -129,3 +204,4 @@ export class IfAddrs {
 
 
 }
+
