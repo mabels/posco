@@ -1,13 +1,16 @@
 import * as fs from 'fs';
 import * as TunatorConnector from './tunator_connector';
+import {IfAddrs} from './if_addrs';
 
 class Tunator {
-  public protocol : string = "tunator";
-  public url: string = "ws://localhost:4711";
+  public url: string = "ws://localhost:4711/tunator";
+  public myAddr: IfAddrs;
   public static fromJson(obj: any) : Tunator {
     let ret = new Tunator();
-    ret.protocol = obj.protocol || ret.protocol;
     ret.url = obj.url || ret.url;
+    if (obj.myAddr) {
+      ret.myAddr = IfAddrs.fromJson(obj.myAddr);
+    }
     return ret;
   }
 }

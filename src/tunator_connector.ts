@@ -3,6 +3,7 @@
 
 import {client as WebSocketClient, connection} from 'websocket';
 import PoscoContext from './posco_context';
+import Packet from './packet';
 
 class TunatorConnector {
     private client: WebSocketClient = new WebSocketClient();
@@ -10,8 +11,7 @@ class TunatorConnector {
 
     private open() {
       console.log("TunatorConnector open:", this.context.config.tunator.url);
-      this.client.connect(this.context.config.tunator.url, 
-                          this.context.config.tunator.protocol);
+      this.client.connect(this.context.config.tunator.url); 
     }
   
     public constructor(context: PoscoContext) {
@@ -44,6 +44,7 @@ class TunatorConnector {
                     console.log("Received: '" + message.utf8Data + "'");
                 }
             });
+            Packet.sendJson(connection, "init", context.config.tunator.myAddr);
         });
         tc.open();
     }

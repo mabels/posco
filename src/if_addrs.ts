@@ -1,5 +1,7 @@
 
- export class RouteVia {
+import AsJson from './as_json';
+
+ export class RouteVia implements AsJson {
   public dest: string;
   public via: string;
   public constructor(dest: string = "", via: string = "") {
@@ -27,7 +29,7 @@
 
 const enum ProtoFamily { AF_INET, AF_INET6 };
 
-export class IfAddrs {
+export class IfAddrs implements AsJson {
   public mtu: Number = 1360;
   public addrs: Array<String> = [];
   public routes: Array<RouteVia> = [];
@@ -198,7 +200,9 @@ export class IfAddrs {
     let ret = new IfAddrs();
     ret.mtu = obj['mtu'];
     ret.addrs = obj['addrs'];
-    ret.routes = obj['routes'];
+    for (let route of obj['routes']||[]) {
+      ret.routes.push(RouteVia.fromJson(route));
+    }
     return ret;
   }
 
