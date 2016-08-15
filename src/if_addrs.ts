@@ -199,9 +199,18 @@ export class IfAddrs implements AsJson {
   public static fromJson(obj: any) : IfAddrs  {
     let ret = new IfAddrs();
     ret.mtu = obj['mtu'];
-    ret.addrs = obj['addrs'];
+    for (let addr of obj['addrs']) {
+      if (!ret.addAddr(addr)) {
+        console.error("not valid addr:", addr);
+      }
+    }
     for (let route of obj['routes']||[]) {
-      ret.routes.push(RouteVia.fromJson(route));
+      let rv = RouteVia.fromJson(route);
+      if (rv.isValid()) {
+        ret.addRoute(rv);
+      } else {
+        console.error("not valid route:", rv);
+      }
     }
     return ret;
   }

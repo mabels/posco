@@ -1,21 +1,34 @@
 
 
 
-import {client as WebSocketClient, connection} from 'websocket';
+import * as WebSocket from 'ws';
 import PoscoContext from './posco_context';
 import Packet from './packet';
 
-class TunatorConnector {
-    private client: WebSocketClient = new WebSocketClient();
-    private context: PoscoContext;
+import * as events from 'events';
 
-    private open() {
+interface CbPacket { (pack: Packet): void }
+
+class TunatorConnector extends events.EventEmitter {
+    public client: WebSocket;
+    private context: PoscoContext;
+    private eventRecvPackets: CbPacket[];
+
+    public open() {
       console.log("TunatorConnector open:", this.context.config.tunator.url);
-      this.client.connect(this.context.config.tunator.url); 
+      this.client = new WebSocket(this.context.config.tunator.url); 
     }
   
     public constructor(context: PoscoContext) {
+        super();
         this.context = context;
+    }
+
+    public on(event: string, cb: CbPacket): this {
+       if (event == "recvPacket") {
+           this.eventRecvPackets.push(cb);
+       }
+       return this; 
     }
     public static connect(context: PoscoContext)  {
         if (context.tunatorConnector) {
@@ -23,30 +36,27 @@ class TunatorConnector {
             return;
         }
         let tc = new TunatorConnector(context);
-
-        tc.client.on('connectFailed', (error) => {
-            console.error('TunatorConnector Error: ' + error.toString() + " reconnect");
+        tc.open();
+        tc.client.on('error', (error) => {
+            console.log("TunatorConnector Connection Error: " + error.toString() + " reconnect");
             setTimeout(() => { tc.open() }, 1000);
         });
-
-        tc.client.on('connect', (connection: connection) => {
-            console.log('TunatorConnector WebSocket Client Connected');
-            connection.on('error', (error) => {
-                console.log("TunatorConnector Connection Error: " + error.toString() + " reconnect");
-                setTimeout(() => { tc.open() }, 1000);
-            });
-            connection.on('close', () => {
-                console.log("TunatorConnector Connection Closed: reconnect");
-                setTimeout(() => { tc.open() }, 1000);
-            });
-            connection.on('message', (message) => {
-                if (message.type === 'utf8') {
-                    console.log("Received: '" + message.utf8Data + "'");
-                }
-            });
-            Packet.sendJson(connection, "init", context.config.tunator.myAddr);
+        tc.client.on('close', () => {
+            console.log("TunatorConnector Connection Closed: reconnect");
+            setTimeout(() => { tc.open() }, 1000);
         });
-        tc.open();
+        tc.client.on('message', (data, flags) => {
+            let pacType = Packet.receive(data);
+            //console.log(">>>", pacType);
+            tc.eventRecvPackets.forEach((cb) => cb(pacType));
+        });
+
+        tc.client.on('open', () => {
+            console.log('TunatorConnector WebSocket Client Connected');
+            Packet.sendJson(tc.client, "init", context.config.tunator.myAddr);
+        });
+        //tc.open();
+        return tc;
     }
 }
 
