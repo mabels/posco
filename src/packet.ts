@@ -2,7 +2,7 @@
 import * as WebSocket from 'ws';
 import AsJson from './as_json';
 
-interface PackData {
+export interface PackData {
     type: string
     data: any;
 }
@@ -40,7 +40,12 @@ export class Packet {
         }));
     }
     public static sendPakt(con: WebSocket, bPack: BinPacket) {
-        con.send(bPack.data); //including PAKT 
+        try {
+            console.log("bPack:", bPack.data.length, Buffer.from(bPack.data));
+            con.send(bPack.data, { binary: true, mask: true }); //including PAKT 
+        } catch (e) {
+            console.error("sendPakt:", e, con);
+        }
     }
     public static receive(buf: Buffer) : PackData {
         let type = buf.slice(0, 4).toString('utf8');

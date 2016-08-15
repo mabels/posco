@@ -31,8 +31,8 @@ const enum ProtoFamily { AF_INET, AF_INET6 };
 
 export class IfAddrs implements AsJson {
   public mtu: Number = 1360;
-  public addrs: Array<String> = [];
-  public routes: Array<RouteVia> = [];
+  public addrs: string[] = [];
+  public routes: RouteVia[] = [];
 
   static splitPrefix(addr: string) : string[] {
     let slash = addr.split("/");
@@ -147,8 +147,8 @@ export class IfAddrs implements AsJson {
     return false;
   }
 
-  public getAddrs() : Array<String> { return this.addrs; }
-  public getRoutes() : Array<RouteVia> { return this.routes; }
+  public getAddrs() : string[] { return this.addrs; }
+  public getRoutes() : RouteVia[] { return this.routes; }
 
   public setMtu(_mtu: Number) {
      this.mtu = _mtu;
@@ -162,12 +162,12 @@ export class IfAddrs implements AsJson {
     // LOG(INFO) << asCommands("isEcho");
     return this.addrs.length == 0;
   }
-  public addAddr(addr: string) : boolean {
+  public addAddr(addr: string) : IfAddrs {
     if (!IfAddrs.isValidWithPrefix(addr)) {
-      return false;
+      return null;
     }
     this.addrs.push(addr);
-    return true;
+    return this;
   }
   public addRoute(route: RouteVia) {
     if (!route.isValid()) {

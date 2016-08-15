@@ -41,10 +41,10 @@ module.exports = [{
   ]
 },{
   target: 'node',
-  entry: './src/server',
+  entry: './src/main',
   output: {
     path: __dirname + '/dist',
-    filename: 'server.js',
+    filename: 'main.js',
     libraryTarget: 'commonjs2'
   },
   module: {

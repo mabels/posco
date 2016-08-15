@@ -6,8 +6,8 @@ import * as WebSocket from 'ws';
 interface CbPacket { (ws: WebSocket, pack: Packet.Packet): void }
 
 class Posco {
-   cbReceiveJson: CbPacket[];
-   cbReceivePakt: CbPacket[];
+   cbReceiveJson: CbPacket[] = [];
+   cbReceivePakt: CbPacket[] = [];
 
     public on(event: string, cb: CbPacket) : Posco {
         if (event == "receivePAKT") {
