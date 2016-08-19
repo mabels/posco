@@ -39,7 +39,12 @@ class PoscoServer extends Posco {
         ps.on('receiveJSON', (ws: WebSocket, jPack: Packet.JsonPacket) => {
             if (jPack.action == "req-connection") {
                 let ifAddr = IfAddrs.IfAddrs.fromJson(jPack.data);
-                Packet.Packet.sendJson(ws, "res-connection", ipStore.findFree(ws, ifAddr).ifAddr);
+                let ipEntry = ipStore.findFree(ws, ifAddr);
+                if (ipEntry) {
+                    Packet.Packet.sendJson(ws, "res-connection", ipEntry.ifAddr);
+                } else {
+                    console.error("no address found:");
+                }
             } else {
                 console.error("unknown message:", jPack.action);
             }

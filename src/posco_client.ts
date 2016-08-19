@@ -20,12 +20,12 @@ class PoscoClient extends Posco {
 
     public open() {
       console.log("PoscoClient open:", this.config.url);
-      this.ws = new WebSocket(this.config.url); 
+      this.ws = new WebSocket(this.config.url);
     }
 
     public static main(context: PoscoContext) : PoscoClient {
         console.log("Starting PoscoClient");
-        let pc = new PoscoClient(context.config.client);        
+        let pc = new PoscoClient(context.config.client);
         pc.on('receivePAKT', (ws: WebSocket, bPack: Packet.BinPacket) => {
             console.log("receivePAKT>>", bPack);
             Packet.Packet.sendPakt(pc.tunatorConnector.client, bPack);
@@ -49,7 +49,13 @@ class PoscoClient extends Posco {
             }
         });
 
-        pc.ws = new WebSocket(context.config.client.url); 
+        process.on('uncaughtException', function (err) {
+            pc.ws = null;
+            console.log(err);
+            setTimeout(() => { pc.open() }, 1000);
+        });
+
+        pc.open();
         pc.ws.on('error', (error) => {
             pc.ws = null;
             console.log("PoscoClient Connection Error: " + error.toString() + " reconnect");

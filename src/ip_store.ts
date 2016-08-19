@@ -38,7 +38,8 @@ class IpStore {
     public findFree(connection: WebSocket, ifAddrs: IfAddrs.IfAddrs): IpEntry {
         // fake impl.
         let free = new IpEntry();
-        free.ifAddr = new IfAddrs.IfAddrs().addAddr("192.168.77.100/24").addAddr("fd00::cafe:affe:100/112");
+        free.ifAddr = new IfAddrs.IfAddrs().setDest("192.168.77.1")
+            .addAddr("192.168.77.100/24").addAddr("fd00::cafe:affe:100/112");
         free.ws = connection;
         return this.add(free);
     }

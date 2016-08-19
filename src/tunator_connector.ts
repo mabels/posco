@@ -17,10 +17,28 @@ class TunatorConnector extends Posco {
     // private eventRecvPackets: CbPacket[] = [];
 
     public open() {
-      console.log("TunatorConnector open:", this.config.url);
-      this.client = new WebSocket(this.config.url); 
+      console.log("TunatorConnector {open:", this.config.url);
+      this.client = new WebSocket(this.config.url);
+      this.client.on('error', (error) => {
+          console.error("TunatorConnector Connection Error: " + error.toString() + " reconnect");
+          //            setTimeout(() => { tc.open() }, 1000);
+      });
+      this.client.on('close', () => {
+          console.log("TunatorConnector Connection Closed: reconnect");
+          setTimeout(() => { this.open() }, 1000);
+      });
+      this.client.on('message', (data, flags) => {
+          //let pacType = Packet.receive(data);
+          //console.log(">>>TC:", flags, Buffer.from(data));
+          this.processMessage(null, flags.buffer);
+      });
+      this.client.on('open', () => {
+          console.log('TunatorConnector WebSocket Client Connected', config.myAddr);
+          Packet.sendJson(this.client, "init", config.myAddr);
+      });
+      console.log("TunatorConnector }open:", this.config.url);
     }
-  
+
     public constructor(config: Config.Tunator) {
         super();
         this.config = config;
@@ -30,28 +48,11 @@ class TunatorConnector extends Posco {
     //    if (event == "receivePacket") {
     //        this.eventRecvPackets.push(cb);
     //    }
-    //    return this; 
+    //    return this;
     // }
     public static connect(config: Config.Tunator) : TunatorConnector {
         let tc = new TunatorConnector(config);
         tc.open();
-        tc.client.on('error', (error) => {
-            console.log("TunatorConnector Connection Error: " + error.toString() + " reconnect");
-            setTimeout(() => { tc.open() }, 1000);
-        });
-        tc.client.on('close', () => {
-            console.log("TunatorConnector Connection Closed: reconnect");
-            setTimeout(() => { tc.open() }, 1000);
-        });
-        tc.client.on('message', (data, flags) => {
-            //let pacType = Packet.receive(data);
-            //console.log(">>>TC:", flags, Buffer.from(data));
-            tc.processMessage(null, flags.buffer);
-        });
-        tc.client.on('open', () => {
-            console.log('TunatorConnector WebSocket Client Connected', config.myAddr);
-            Packet.sendJson(tc.client, "init", config.myAddr);
-        });
         return tc;
     }
 }
@@ -59,7 +60,7 @@ class TunatorConnector extends Posco {
 export default TunatorConnector;
 
 // module.exports = function(config) {
-  
+
 
 // client.onerror = function() {
 //     console.log('Connection Error');
