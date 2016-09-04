@@ -31,7 +31,7 @@ const enum ProtoFamily { AF_INET, AF_INET6 };
 
 export class IfAddrs implements AsJson {
   public mtu: Number = 1360;
-  public dest: string;
+  public dests: string[] = [];
   public addrs: string[] = [];
   public routes: RouteVia[] = [];
 
@@ -148,12 +148,16 @@ export class IfAddrs implements AsJson {
     return false;
   }
 
-  public getDest() : string { return this.dest; }
-  public setDest(dest: string) : IfAddrs {
+  public getDests() : string[] { return this.dests; }
+  public setDests(dests: string[]) : IfAddrs { 
+    this.dests = dests; 
+    return this;
+  }
+  public addDest(dest: string) : IfAddrs {
       if (!IfAddrs.isValidWithPrefix(dest)) {
       return null;
     }
-    this.dest = dest;
+    this.dests.push(dest);
     return this;
   }
 
@@ -201,7 +205,7 @@ export class IfAddrs implements AsJson {
   public asJson() : Object {
     return {
       "mtu" : this.mtu,
-      "dest" : this.dest,
+      "dests" : this.dests,
       "addrs" : this.addrs,
       "routes" : this.routes
     }
@@ -210,8 +214,8 @@ export class IfAddrs implements AsJson {
   public static fromJson(obj: any) : IfAddrs  {
     let ret = new IfAddrs();
     ret.mtu = obj['mtu'];
-    if (obj['dest']) {
-      if (!ret.setDest(obj['dest'])) {
+    if (obj['dests']) {
+      if (!ret.setDests(obj['dests'])) {
         console.error("dest not valid");
       }
     }

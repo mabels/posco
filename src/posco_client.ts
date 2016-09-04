@@ -49,11 +49,11 @@ class PoscoClient extends Posco {
             }
         });
 
-        process.on('uncaughtException', function (err) {
-            pc.ws = null;
-            console.log(err);
-            setTimeout(() => { pc.open() }, 1000);
-        });
+        // process.on('uncaughtException', function (err) {
+        //     pc.ws = null;
+        //     console.log(err);
+        //     setTimeout(() => { pc.open() }, 1000);
+        // });
 
         pc.open();
         pc.ws.on('error', (error) => {

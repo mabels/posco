@@ -6,7 +6,7 @@ import Posco from './posco';
 
 import TunatorConnector from './tunator_connector';
 import * as IfAddrs from './if_addrs';
-import IpStore from './ip_store';
+// import IpStore from './ip_store';
 
 class PoscoServer extends Posco {
     wss: WebSocket.Server;
@@ -23,7 +23,8 @@ class PoscoServer extends Posco {
     public static main(context: PoscoContext) {
         console.log("Starting Server:");
         let tc = TunatorConnector.connect(context.config.server.tunator);
-        let ipStore = new IpStore(context);
+        let ipStore = context.config.server.ipStore;
+        ipStore.assignGateWay(context.config.server.tunator.myAddr.addrs);
         let ps = PoscoServer.start(context);
         tc.on('receivePAKT', (ws: WebSocket, bPack: Packet.BinPacket) => {
             let connection = ipStore.findConnection(bPack);
