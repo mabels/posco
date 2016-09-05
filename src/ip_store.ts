@@ -3,9 +3,9 @@ import * as IfAddrs from './if_addrs';
 import * as WebSocket from 'ws';
 import * as Packet from './packet';
 import * as fs from 'fs';
-import IPAddress from 'ipaddress';
+import {IPAddress,Crunchy} from 'ipaddress';
 
-class IpEntry {
+export class IpEntry {
     public ifAddr: IfAddrs.IfAddrs;
     public ws: WebSocket;
 }
@@ -39,10 +39,14 @@ class IpRange {
         }
         return ir;
     }
+
+    public size() : Crunchy { 
+        return this.target.sub(this.start);
+    }
 }
 
-class IpAssigned {
-    ipAssigned: { [id: string]: IPAddress } = {};
+export class IpAssigned {
+    ipAssigned: { [id: string]: IpEntry } = {};
     fname: string;
 
     public static fromFile(fname: string): IpAssigned {
@@ -61,22 +65,31 @@ class IpAssigned {
         return ret;
     }
 
-    public is_assigned(ia: IPAddress): IPAddress {
+    public is_assigned(ia: IPAddress): IpEntry {
         return this.ipAssigned[ia.to_s()];
     }
 
-    public assign(ia: IPAddress): boolean {
-        if (!this.is_assigned(ia)) {
-            return false;
+    public assign(ia: IPAddress, ie: IpEntry): IPAddress {
+        if (this.is_assigned(ia)) {
+            return null;
         }
-        this.ipAssigned[ia.to_s()] = ia;
-        return true;
+        this.ipAssigned[ia.to_s()] = ie;
+        return ia;
+    }
+
+    public release(ia: IPAddress) : IPAddress {
+        let s = ia.to_s();
+        if (this.ipAssigned[s]) {
+            delete this.ipAssigned[s];
+            return ia; 
+        }
+        return null;
     }
 
 }
 
 
-class IpStore {
+export class IpStore {
     // context: PoscoContext;
     addrs: { [key: string]: IpEntry } = {};
     ipv4Range: IpRange[] = [];
@@ -93,7 +106,8 @@ class IpStore {
         if (!ret) {
             return ret;
         }
-        for (let r of obj) {
+        for (let i = 0; i < obj.length; ++i) {
+            let r = obj[i];
             ret.push(IpRange.fromJson([r[0], r[1]]));
         }
         return ret;
@@ -101,19 +115,24 @@ class IpStore {
 
     public static fromJson(obj: any): IpStore {
         let ret = new IpStore();
+        // console.log("IpStore:", obj);
         ret.ipv4Range = IpStore.toIpRangeArray(obj.ipv4Range);
         ret.ipv6Range = IpStore.toIpRangeArray(obj.ipv6Range);
-        ret.ipAssigned = IpAssigned.fromFile(obj.assignedFile || "./ip_assigned.json");
+        if (!ret.ipv4Range.reduce((p, c)=>p.add(c.size()), Crunchy.zero()).eq(
+            ret.ipv6Range.reduce((p,c) => p.add(c.size()), Crunchy.zero()))) {
+            console.log("Range of ipv4 and ipv6 not equal");
+            return null;
+        }
+        ret.ipAssigned = new IpAssigned();
+        if (obj.assignedFile) {
+          ret.ipAssigned = IpAssigned.fromFile(obj.assignedFile || "./ip_assigned.json");
+        }
         return ret;
     }
 
-    public assignGateWay(addrs: string[]): boolean {
+    public assignGateWay(addrs: IPAddress[]): boolean {
         let ret: IPAddress[] = [];
-        for (let ips of addrs) {
-            let ip = IPAddress.parse(ips);
-            if (!ip) {
-                return false;
-            }
+        for (let ip of addrs) {
             let found = false;
             for (let range of this.ipv4Range.concat(this.ipv6Range)) {
                 if (range.start.network().includes(ip)) {
@@ -133,29 +152,30 @@ class IpStore {
 
     private add(ip: IpEntry): IpEntry {
         for (let addr of ip.ifAddr.getAddrs()) {
-            console.log("add:", addr, this.addrs);
-            if (this.addrs[addr]) {
+            // console.log("add:", addr, this.addrs);
+            if (this.addrs[addr.to_s()]) {
                 console.error("duplicated ip")
                 return null;
             }
-            this.addrs[addr] = ip;
+            this.addrs[addr.to_s()] = ip;
         }
         return ip;
     }
     private remove(ip: IpEntry): IpEntry {
         for (let addr of ip.ifAddr.getAddrs()) {
-            if (!this.addrs[addr]) {
+            if (!this.addrs[addr.to_s()]) {
                 console.error("unmapped ip")
                 return null;
             }
-            delete this.addrs[addr];
+            delete this.addrs[addr.to_s()];
         }
         return ip;
     }
-    public findIpFromRange(ranges: IpRange[]): IPAddress {
+    public findIpFromRange(ranges: IpRange[], ifAddrs: IfAddrs.IfAddrs, ipe: IpEntry): IPAddress {
         for (let range of ranges) {
-            for (let i = range.start; i != null; i = i.inc()) {
-                let found = this.ipAssigned.assign(i);
+            for (let i = range.start; i.lte(range.target) ; i = i.inc()) {
+                // console.log("findIpFromRange:", i.to_string());
+                let found = this.ipAssigned.assign(i, ipe);
                 if (found) {
                     return i;
                 }
@@ -165,19 +185,26 @@ class IpStore {
     }
     public findFree(connection: WebSocket, ifAddrs: IfAddrs.IfAddrs): IpEntry {
         // fake impl.
-        let ipv4 = this.findIpFromRange(this.ipv4Range);
-        let ipv6 = this.findIpFromRange(this.ipv6Range);
+        // console.log("findFree-1");
+        let ipe = new IpEntry();
+        let ipv4 = this.findIpFromRange(this.ipv4Range, ifAddrs, ipe);
+        // console.log("findFree-2");
+        let ipv6 = this.findIpFromRange(this.ipv6Range, ifAddrs, ipe);
+        // console.log("findFree-3");
         if (!ipv4 || !ipv6) {
-            console.log('no free ip found');
+            // console.log('no free ip found');
             return null;
         }
-        let free = new IpEntry();
-        free.ifAddr = new IfAddrs.IfAddrs()
-            .setDests(IPAddress.to_s_vec(this.gateWays))
-            .addAddr(ipv4.to_string())
-            .addAddr(ipv6.to_string());
-        free.ws = connection;
-        return this.add(free);
+        // console.log("findFree-4");
+        // let free = new IpEntry();
+        // console.log("findFree-5");
+        ipe.ifAddr = new IfAddrs.IfAddrs()
+            .setDests(this.gateWays)
+            .addAddr(ipv4)
+            .addAddr(ipv6);
+        ipe.ws = connection;
+        // console.log("findFree-6");
+        return ipe;
     }
     public findConnection(bPack: Packet.BinPacket): WebSocket {
         // fake impl
@@ -186,6 +213,14 @@ class IpStore {
         }
         console.log(">>>>findConnection>>>> FAILED");
         return null;
+    }
+    public release(ipe: IpEntry) : IpEntry {
+        for (let ip of ipe.ifAddr.getAddrs()) {
+            if (!this.ipAssigned.release(ip)) {
+                return null;
+            }
+        }
+        return ipe;
     }
 }
 

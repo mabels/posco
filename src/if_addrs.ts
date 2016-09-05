@@ -1,28 +1,32 @@
 
 import AsJson from './as_json';
+import IPAddress from 'ipaddress';
 
  export class RouteVia implements AsJson {
-  public dest: string;
-  public via: string;
-  public constructor(dest: string = "", via: string = "") {
-    this.dest = dest;
-    this.via = via;
+  public dest: IPAddress;
+  public via: IPAddress;
+  public constructor() {
   }
 
-  public isValid() : boolean {
-    return IfAddrs.isValidWithPrefix(this.dest) &&
-          IfAddrs.isValidWithoutPrefix(this.via);
+  public static parse(dest: IPAddress, via: IPAddress) : RouteVia {
+    if (via == null || dest == null) {
+      return null;
+    }
+    let ret = new RouteVia();
+    ret.dest = dest;
+    ret.via = via;
+    return ret;
   }
   public asJson() : Object {
     return {
-      "dest": this.dest,
-      "via": this.via
+      "dest": this.dest.to_string(),
+      "via": this.via.to_string()
     }
   }
   public static fromJson(val: any) : RouteVia {
     let rv = new RouteVia();
-    rv.dest = val["dest"];
-    rv.via = val["via"];
+    rv.dest = IPAddress.parse(val["dest"]);
+    rv.via = IPAddress.parse(val["via"]);
     return rv;
   }
 }
@@ -31,137 +35,25 @@ const enum ProtoFamily { AF_INET, AF_INET6 };
 
 export class IfAddrs implements AsJson {
   public mtu: Number = 1360;
-  public dests: string[] = [];
-  public addrs: string[] = [];
+  public dests: IPAddress[] = [];
+  public addrs: IPAddress[] = [];
   public routes: RouteVia[] = [];
 
-  static splitPrefix(addr: string) : string[] {
-    let slash = addr.split("/");
-    if (slash.length == 1) {
-      return [slash[0], ""];
-    }
-    return [slash[0], slash[1]];
-  }
-  static isPrefixValid(af: ProtoFamily, sPrefix: string) : boolean {
-    if (sPrefix == null) {
-      return false;
-    }
-    if (sPrefix.length == 0) {
-      return true;
-    }
-    let prefix = parseInt(sPrefix, 10);
-    if (isNaN(prefix)) {
-      return false;
-    }
-    if (af == ProtoFamily.AF_INET && 0 <= prefix && prefix <= 32) {
-      return true;
-    }
-    if (af == ProtoFamily.AF_INET6 && 0 <= prefix && prefix <= 128) {
-      return true;
-    }
-    return false;
-  }
 
-  public static isValidWithoutPrefix(addr: string) : boolean {
-    let slash = addr.split("/");
-    if (slash.length != 1) {
-      return false;
-    }
-    return IfAddrs.isValidWithPrefix(addr);
-  }
-  public static splitToIpv4(addr: string) : Number[] {
-    let dots = addr.split(".");
-    if (dots.length < 2) {
-      return null;
-    }
-    let parts = Array<Number>();
-    for (let part of dots) {
-      if (!/^\d+$/.test(part)) {
-        return null; 
-      }
-      let num = parseInt(part, 10);
-      if (isNaN(num)) {
-        return null;
-      } 
-      if (num < 0 || 256 <= num) {
-        return null;
-      }
-      parts.push(num);
-    }
-    return parts;
-  }
-  public static split_on_colon(addr: string) : Number[] {
-    let ret = Array<Number>();
-    let parts = addr.split(":");
-    if (parts.length == 0) {
-      ret.push(0);
-      return ret;
-    }
-    for (let part of parts) {
-      if (!/^[0-9A-Fa-f]+$/.test(part)) {
-        return null;
-      }
-      let num = parseInt(part, 16);
-      if (isNaN(num)) {
-        return null;
-      }
-      if (num < 0 || 65536 <= num) {
-        return null;
-      }
-      ret.push(num);
-    }
-    return ret;
-  }
-  public static splitToIpv6(addr: string) : Number[] {
-        let pre_post = addr.split("::");
-        if (pre_post.length > 2) {
-          return null;
-        }
-        if (pre_post.length == 2) {
-            let pre = IfAddrs.split_on_colon(pre_post[0]);
-            if (!pre) {
-              return null;
-            }
-            let post = IfAddrs.split_on_colon(pre_post[1]);
-            if (!post) {
-              return null;
-            }
-            let zeros = Array<Number>();
-            for (let i = 0; i < 128/16 - pre.length - post.length; ++i) {
-              zeros.push(0);
-            }
-            return pre.concat(zeros.concat(post));
-        }
-        return IfAddrs.split_on_colon(addr);
-  }
-  public static isValidWithPrefix(addr: string) : boolean {
-    let sp = IfAddrs.splitPrefix(addr);
-    if (sp[0].length == 0) {
-      return false;
-    }
-    if (IfAddrs.splitToIpv4(sp[0])) {
-      return IfAddrs.isPrefixValid(ProtoFamily.AF_INET, sp[1]);
-    }
-    if (IfAddrs.splitToIpv6(sp[0])) {
-     return IfAddrs.isPrefixValid(ProtoFamily.AF_INET6, sp[1]);
-    }
-    return false;
-  }
-
-  public getDests() : string[] { return this.dests; }
-  public setDests(dests: string[]) : IfAddrs { 
+  public getDests() : IPAddress[] { return this.dests; }
+  public setDests(dests: IPAddress[]) : IfAddrs { 
     this.dests = dests; 
     return this;
   }
-  public addDest(dest: string) : IfAddrs {
-      if (!IfAddrs.isValidWithPrefix(dest)) {
+  public addDest(dest: IPAddress) : IfAddrs {
+    if (!dest) {
       return null;
     }
     this.dests.push(dest);
     return this;
   }
 
-  public getAddrs() : string[] { return this.addrs; }
+  public getAddrs() : IPAddress[] { return this.addrs; }
   public getRoutes() : RouteVia[] { return this.routes; }
 
   public setMtu(_mtu: Number) {
@@ -176,27 +68,27 @@ export class IfAddrs implements AsJson {
     // LOG(INFO) << asCommands("isEcho");
     return this.addrs.length == 0;
   }
-  public addAddr(addr: string) : IfAddrs {
-    if (!IfAddrs.isValidWithPrefix(addr)) {
+  public addAddr(addr: IPAddress) : IfAddrs {
+    if (!addr) {
       return null;
     }
     this.addrs.push(addr);
     return this;
   }
-  public addRoute(route: RouteVia) {
-    if (!route.isValid()) {
-      return false;
+  public addRoute(route: RouteVia) : IfAddrs {
+    if (!route) {
+      return null;   
     }
     this.routes.push(route);
-    return true;
+    return this;
   }
   public asCommands(dev: string) : string {
     let ret = Array<String>();
     this.addrs.forEach((addr) => {
-      ret.push("ip addr add " + addr + " dev " + dev);
+      ret.push("ip addr add " + addr.to_string() + " dev " + dev);
     });
     this.routes.forEach((route) => {
-     	ret.push("ip route add " + route.dest + " via " + route.via + " dev " + dev);
+     	ret.push("ip route add " + route.dest.to_string() + " via " + route.via.to_s() + " dev " + dev);
     })
     ret.push("ip link set dev " + dev + " mtu " + this.mtu + " up");
     return ret.join("\n");
@@ -205,9 +97,9 @@ export class IfAddrs implements AsJson {
   public asJson() : Object {
     return {
       "mtu" : this.mtu,
-      "dests" : this.dests,
-      "addrs" : this.addrs,
-      "routes" : this.routes
+      "dests" : this.dests.map(i => i.to_s()),
+      "addrs" : this.addrs.map(i => i.to_string()),
+      "routes" : this.routes.map(i => i.asJson())
     }
   }
 
@@ -215,22 +107,24 @@ export class IfAddrs implements AsJson {
     let ret = new IfAddrs();
     ret.mtu = obj['mtu'];
     if (obj['dests']) {
-      if (!ret.setDests(obj['dests'])) {
+      if (!ret.setDests(obj['dests'].map((i:string) => IPAddress.parse(i)))) {
         console.error("dest not valid");
+        return null;
       }
     }
     for (let addr of obj['addrs']) {
-      if (!ret.addAddr(addr)) {
+      if (!ret.addAddr(IPAddress.parse(addr))) {
         console.error("not valid addr:", addr);
+        return null;
       }
     }
     for (let route of obj['routes']||[]) {
       let rv = RouteVia.fromJson(route);
-      if (rv.isValid()) {
-        ret.addRoute(rv);
-      } else {
-        console.error("not valid route:", rv);
+      if (!rv) {
+        console.error("not valid route:", route);
+        return null;
       }
+      ret.addRoute(rv);
     }
     return ret;
   }

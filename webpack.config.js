@@ -10,36 +10,8 @@ fs.writeFileSync('test/all.ts',
     .map(file => `import './${file}';`)
     .join('\n'));
 
-module.exports = [{
-  target: 'web',
-  entry: './src/client',
-  output: {
-    path: __dirname + '/dist',
-    filename: 'client.js'
-  },
-  module: {
-    loaders: [
-      {
-        test: /\.tsx?$/,
-        loader: 'awesome-typescript?useBabel=true'
-      },
-      {
-        test: /\.less$/,
-        loader: ExtractTextPlugin.extract('css?sourceMap!less?sourceMap')
-      }
-    ]
-  },
-  devtool: 'source-map',
-  resolve: {
-    extensions: ['', '.tsx', '.ts', '.webpack.js', '.web.js', '.js']
-  },
-  plugins: [
-    new ExtractTextPlugin('styles.css'),
-    new HtmlWebpackPlugin({
-      template: './src/index.ejs'
-    })
-  ]
-},{
+module.exports = [
+{
   target: 'node',
   entry: './src/main',
   output: {

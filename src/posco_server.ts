@@ -6,7 +6,7 @@ import Posco from './posco';
 
 import TunatorConnector from './tunator_connector';
 import * as IfAddrs from './if_addrs';
-// import IpStore from './ip_store';
+ import IPAddress from 'ipaddress';
 
 class PoscoServer extends Posco {
     wss: WebSocket.Server;
