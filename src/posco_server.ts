@@ -21,7 +21,7 @@ class PoscoServer extends Posco {
     }
 
     public static main(context: PoscoContext) {
-        console.log("Starting Server:");
+        console.log("Starting Server:", context.config.server);
         let tc = TunatorConnector.connect(context.config.server.tunator);
         let ipStore = context.config.server.ipStore;
         ipStore.assignGateWay(context.config.server.tunator.myAddr.addrs);

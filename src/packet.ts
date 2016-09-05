@@ -41,7 +41,7 @@ export class Packet {
     }
     public static sendPakt(con: WebSocket, bPack: BinPacket) {
         try {
-            console.log("bPack:", bPack.data.length, Buffer.from(bPack.data));
+            //console.log("bPack:", bPack.data.length, Buffer.from(bPack.data));
             con.send(bPack.data, { binary: true, mask: true }); //including PAKT 
         } catch (e) {
             console.error("sendPakt:", e, con);

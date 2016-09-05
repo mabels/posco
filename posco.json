@@ -7,14 +7,14 @@
             "addrs": ["192.168.77.1/24", "fd00::cafe:affe:1/112"]
         }
     },
-    "IpStore": {
+    "ipStore": {
       "ipv4Range" : [["192.168.77.100/24", "192.168.77.200/24"]],
-      "ipv6Range" : [["ifd00::cafe:affe:1000/112", "ifd00::cafe:affe:1000/112"]]
+      "ipv6Range" : [["fd00::cafe:affe:1000/112", "fd00::cafe:affe:1064/112"]]
     }
   },
   "client" : {
     "tunator": {
-        "url": "ws://127.0.0.1:4711/tunator"
+        "url": "ws://10.24.1.176:4711/tunator"
     }
   }
 }
