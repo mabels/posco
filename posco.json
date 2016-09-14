@@ -1,12 +1,10 @@
 {
   "server" : {
-    "bindUrl": "wss://127.0.0.1:8081",
+    "bindUrl": "ws://0.0.0.0:8080",
     "httpsOptions": {
-      "key": "posco-srv.key.pem",
-      "cert": "posco-srv.cert.pem"
     },
     "tunator": {
-        "url": "ws://10.24.1.155:4711/tunator",
+        "url": "ws://127.0.0.1:4711/tunator",
         "myAddr": {
             "mtu": 1400,
             "addrs": ["192.168.77.1/24", "fd00::cafe:affe:1/112"]

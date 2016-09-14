@@ -34,8 +34,8 @@ export class Server implements WebSocket.IServerOptions {
     ret.bindUrl = Url.parse(obj.bindUrl||"ws://0.0.0.0:4711");
     if (obj.httpsOptions) {
       ret.httpsOptions = {
-        key: fs.readFileSync(obj.httpsOptions.key).toString() || "",
-        cert: fs.readFileSync(obj.httpsOptions.cert).toString() || ""
+        key: (obj.httpsOptions.key && fs.readFileSync(obj.httpsOptions.key).toString()) || "",
+        cert: (obj.httpsOptions.cert && fs.readFileSync(obj.httpsOptions.cert).toString()) || ""
       }
     }
     return ret;
