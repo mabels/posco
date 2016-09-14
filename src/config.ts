@@ -48,6 +48,12 @@ export class Client {
   public static fromJson(obj: any) : Client {
     let ret = new Client();
     ret.url = obj.url || ret.url;
+    let clientOfs = process.argv.indexOf("client"); 
+    if (clientOfs > 0) {
+	if (process.argv[clientOfs+1]) {
+		ret.url = process.argv[clientOfs+1];
+	}
+    }
     ret.tunator = Tunator.fromJson(obj.tunator||{});
     return ret;
   }
