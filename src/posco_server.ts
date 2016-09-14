@@ -23,9 +23,9 @@ class PoscoServer extends Posco {
         console.log("Bind to:", url.href);
         if (url.protocol == "wss:") { 
         //console.log(">>>>>>>>>>>>>",context.config.server.httpsOptions);
-          let httpserver = Https.createServer(context.config.server.httpsOptions);
-          httpserver.listen(+url.port, url.hostname);
-          ret.wss = new WebSocket.Server({ server: httpserver});
+          //let httpserver = Https.createServer(context.config.server.httpsOptions);
+          //httpserver.listen(+url.port, url.hostname);
+          //ret.wss = new WebSocket.Server({ server: httpserver});
         } else {
           let httpserver = Http.createServer();
           httpserver.listen(+url.port, url.hostname);
