@@ -3,6 +3,9 @@ import * as WebSocket from 'ws';
 import PoscoContext from './posco_context';
 import * as Packet from './packet';
 import Posco from './posco';
+import * as Http from 'http';
+import * as Https from 'https';
+import * as Url  from 'url';
 
 import TunatorConnector from './tunator_connector';
 import * as IfAddrs from './if_addrs';
@@ -13,7 +16,21 @@ class PoscoServer extends Posco {
 
     public static start(context: PoscoContext): PoscoServer {
         let ret = new PoscoServer();
-        ret.wss = new WebSocket.Server(context.config.server);
+        //console.log("BindUrl:", context.config.server.bindUrl);
+        let url = context.config.server.bindUrl;
+        //console.log(url);
+        //let httpserver : Http.Server | Https.Server; 
+        console.log("Bind to:", url.href);
+        if (url.protocol == "wss:") { 
+        //console.log(">>>>>>>>>>>>>",context.config.server.httpsOptions);
+          let httpserver = Https.createServer(context.config.server.httpsOptions);
+          httpserver.listen(+url.port, url.hostname);
+          ret.wss = new WebSocket.Server({ server: httpserver});
+        } else {
+          let httpserver = Http.createServer();
+          httpserver.listen(+url.port, url.hostname);
+          ret.wss = new WebSocket.Server({ server: httpserver});
+        }
         ret.wss.on('connection', (ws) => {
             ws.on('message', (message) => { ret.processMessage(ws, message) });
         });
@@ -21,7 +38,7 @@ class PoscoServer extends Posco {
     }
 
     public static main(context: PoscoContext) {
-        console.log("Starting Server:", context.config.server);
+    //console.log("Starting Server:", context.config.server);
         let tc = TunatorConnector.connect(context.config.server.tunator);
         let ipStore = context.config.server.ipStore;
         ipStore.assignGateWay(context.config.server.tunator.myAddr.addrs);

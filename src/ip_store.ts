@@ -54,12 +54,12 @@ export class IpAssigned {
         ret.fname = fname;
         let buf = fs.readFileSync(ret.fname, 'utf8');
         if (!buf) {
-            console.log("fromFile failed:", ret.fname);
+            console.error("fromFile failed:", ret.fname);
             return null;
         }
         ret.ipAssigned = JSON.parse(buf);
         if (!ret.ipAssigned) {
-            console.log("fromFile failed parse error:", ret.fname);
+            console.error("fromFile failed parse error:", ret.fname);
             return null;
         }
         return ret;
@@ -120,7 +120,7 @@ export class IpStore {
         ret.ipv6Range = IpStore.toIpRangeArray(obj.ipv6Range);
         if (!ret.ipv4Range.reduce((p, c) => p.add(c.size()), Crunchy.zero()).eq(
             ret.ipv6Range.reduce((p, c) => p.add(c.size()), Crunchy.zero()))) {
-            console.log("Range of ipv4 and ipv6 not equal");
+            console.error("Range of ipv4 and ipv6 not equal");
             return null;
         }
         ret.ipAssigned = new IpAssigned();
@@ -141,7 +141,7 @@ export class IpStore {
                 }
             }
             if (!found) {
-                console.log("Gateway is not part of Ranges:", addrs);
+                console.error("Gateway is not part of Ranges:", addrs);
                 return false;
             }
             ret.push(ip);
@@ -209,41 +209,26 @@ export class IpStore {
     public findConnection(bPack: Packet.BinPacket): WebSocket {
         // fake impl
         // console.log("findConnection:", bPack);
-        let proto = bPack.data.readUInt8(8)
-        if (proto == 0x45) {
-            let destIp = Ipv4.from_number(Crunchy.from_8bit([
-                bPack.data.readUInt8(24),
-                bPack.data.readUInt8(25),
-                bPack.data.readUInt8(26),
-                bPack.data.readUInt8(27)
-            ]), 32);
-            let ipe = this.ipAssigned.is_assigned(destIp);
-            if (ipe) {
-                return ipe.ws;
-            }
-        } if (proto == 0x60) {
-            // 50 41 4b 54 00 00 86 dd 60 02 68 6d 00 40 3a 40 fd 00 00 00 00 00 00 00 00 00 ca fe af fe 00 01 fd 00 00 00 00 00 00 00 00 00 ca fe af fe 10 00 80 00
-            let destIp = Ipv6.from_int(Crunchy.from_8bit([
-                bPack.data.readUInt8(32), bPack.data.readUInt8(33), bPack.data.readUInt8(34), bPack.data.readUInt8(35),
-                bPack.data.readUInt8(36), bPack.data.readUInt8(37), bPack.data.readUInt8(38), bPack.data.readUInt8(39),
-                bPack.data.readUInt8(40), bPack.data.readUInt8(41), bPack.data.readUInt8(42), bPack.data.readUInt8(43),
-                bPack.data.readUInt8(44), bPack.data.readUInt8(45), bPack.data.readUInt8(46), bPack.data.readUInt8(47)
-            ]), 128);
-            // console.log("findConnection:6:", destIp.to_string());
-            let ipe = this.ipAssigned.is_assigned(destIp);
-            if (ipe) {
-                return ipe.ws;
-            }
-
+        let destIp : IPAddress = null;
+        let proto = bPack.data.readUInt8(4);
+        if ((proto&0xf0) == 0x40) {
+            destIp = Ipv4.from_number(Crunchy.from_8bit(
+                [20,21,22,23].map(i => bPack.data.readUInt8(i))
+            ), 32);
+        } else if ((proto&0xf0) == 0x60) {
+            destIp = Ipv6.from_int(Crunchy.from_8bit(
+                [28,29,30,31, 32,33,34,35, 36,37,38,39, 40,41,42,43]
+                    .map(i => bPack.data.readUInt8(i))),
+            128);
         } else {
-            console.error("findConnection: unknown packed:", bPack);
+            console.error("findConnection: unknown packed:", proto, typeof proto, proto == 0x45, bPack);
+            return null;
         }
-        // 50 41 4b 54 00 00 08 00 45 00 00 54 b9 19 40 00 40 01 65 d9 c0 a8 4d 01 c0 a8 4d 64
-        // if 
-        // for (let addr in this.addrs) {
-        //     return this.addrs[addr].ws;
-        // }
-        // console.log(">>>>findConnection>>>> FAILED");
+        //console.log("ip:", destIp.to_string()); 
+        let ipe = this.ipAssigned.is_assigned(destIp);
+        if (ipe) {
+            return ipe.ws;
+        }
         return null;
     }
     public release(ipe: IpEntry): IpEntry {

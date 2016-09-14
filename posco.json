@@ -1,5 +1,10 @@
 {
   "server" : {
+    "bindUrl": "wss://127.0.0.1:8081",
+    "httpsOptions": {
+      "key": "posco-srv.key.pem",
+      "cert": "posco-srv.cert.pem"
+    },
     "tunator": {
         "url": "ws://10.24.1.155:4711/tunator",
         "myAddr": {
@@ -13,8 +18,9 @@
     }
   },
   "client" : {
+    "url": "ws://localhost:8080/posco",
     "tunator": {
-        "url": "ws://10.24.1.176:4711/tunator"
+        "url": "ws://127.0.0.1:4711/tunator"
     }
   }
 }

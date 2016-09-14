@@ -1,5 +1,5 @@
-/// <reference path="../typings/mocha/mocha.d.ts" />
 import { assert } from 'chai';
+import * as Mocha from 'mocha';
 // import {IfAddrs,RouteVia} from "../src/if_addrs";
 import {IpStore,IpAssigned,IpEntry} from "../src/ip_store";
 import IPAddress from 'ipaddress';

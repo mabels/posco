@@ -27,7 +27,7 @@ class PoscoClient extends Posco {
         console.log("Starting PoscoClient");
         let pc = new PoscoClient(context.config.client);
         pc.on('receivePAKT', (ws: WebSocket, bPack: Packet.BinPacket) => {
-            // console.log("receivePAKT>>", bPack);
+            //console.log("ws.receivePacket:", bPack);
             Packet.Packet.sendPakt(pc.tunatorConnector.client, bPack);
         });
         pc.on('receiveJSON', (ws: WebSocket, jPack: Packet.JsonPacket) => {
@@ -40,7 +40,7 @@ class PoscoClient extends Posco {
                 }
                 pc.tunatorConnector = TunatorConnector.connect(context.config.client.tunator);
                 pc.tunatorConnector.on("receivePAKT", (xx: WebSocket, packet: Packet.PackData) => {
-                    // console.log("receivePacket:", packet.type);
+                    //console.log("ws.sendPacket:", packet);
                     Packet.Packet.sendPakt(ws, packet);
                 })
                 console.log("res-connection", context.config.client.tunator);

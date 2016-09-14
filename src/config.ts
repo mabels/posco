@@ -3,6 +3,9 @@ import * as TunatorConnector from './tunator_connector';
 import {IfAddrs} from './if_addrs';
 import * as WebSocket from 'ws';
 import IpStore from './ip_store';
+import * as Url  from 'url';
+import * as Http  from 'http';
+import * as Https  from 'https';
 
 export class Tunator {
   public url: string = "ws://localhost:4711/tunator";
@@ -21,11 +24,20 @@ export class Server implements WebSocket.IServerOptions {
   public port: number = 8080;
   public tunator: Tunator;
   public ipStore: IpStore;
+  public bindUrl: Url.Url;
+  public httpsOptions?: Https.ServerOptions;
   public static fromJson(obj: any) : Server {
     let ret = new Server();
     ret.port = obj.port || ret.port;
     ret.tunator = Tunator.fromJson(obj.tunator||{});
     ret.ipStore = IpStore.fromJson(obj.ipStore||{});
+    ret.bindUrl = Url.parse(obj.bindUrl||"ws://0.0.0.0:4711");
+    if (obj.httpsOptions) {
+      ret.httpsOptions = {
+        key: fs.readFileSync(obj.httpsOptions.key).toString() || "",
+        cert: fs.readFileSync(obj.httpsOptions.cert).toString() || ""
+      }
+    }
     return ret;
   }
 }

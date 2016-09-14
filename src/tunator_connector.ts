@@ -33,7 +33,7 @@ class TunatorConnector extends Posco {
           this.processMessage(null, Buffer.from(data));
       });
       this.client.on('open', () => {
-          console.log('TunatorConnector WebSocket Client Connected', this.config.myAddr);
+          console.log('TunatorConnector WebSocket Client Connected', this.config.myAddr.asJson());
           Packet.sendJson(this.client, "init", this.config.myAddr);
       });
       console.log("TunatorConnector }open:", this.config.url);
