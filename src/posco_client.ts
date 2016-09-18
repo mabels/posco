@@ -74,6 +74,9 @@ class PoscoClient extends Posco {
         });
         pc.ws.on('open', () => {
             console.log('PoscoClient WebSocket Client Connected');
+            console.log((<any>(pc.ws))._socket.getCipher());
+            console.log((<any>(pc.ws))._socket.getPeerCertificate());
+            console.log((<any>(pc.ws))._socket.authorized, (<any>(pc.ws))._socket.authorizationError);
             Packet.Packet.sendJson(pc.ws, "req-connection", pc.config.tunator.myAddr||(new IfAddrs.IfAddrs()));
         });
         return pc;

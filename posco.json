@@ -31,17 +31,11 @@
     }
   },
   "client" : {
-<<<<<<< b7c7c448a85bc8309b58ce0111fcfafa1414cd79
-    "url": "ws://10.24.1.176:8080/posco",
-||||||| merged common ancestors
-    "url": "ws://localhost:8080/posco",
-=======
-    "url": "wss://localhost:8443/posco",
+    "url": "wss://posco-srv.adviser.com/posco",
     "httpsOptions": {
       "key": "posco-clt.key.pem",
       "cert": "posco-clt.cert.pem"
     },
->>>>>>> * client certificates
     "tunator": {
         "url": "ws://127.0.0.1:4711/tunator"
     }
