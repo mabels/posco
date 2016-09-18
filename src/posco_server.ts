@@ -12,28 +12,39 @@ import * as IfAddrs from './if_addrs';
  import IPAddress from 'ipaddress';
 
 class PoscoServer extends Posco {
-    wss: WebSocket.Server;
+    wsss: WebSocket.Server[] = [];
 
     public static start(context: PoscoContext): PoscoServer {
         let ret = new PoscoServer();
         //console.log("BindUrl:", context.config.server.bindUrl);
-        let url = context.config.server.bindUrl;
-        //console.log(url);
-        //let httpserver : Http.Server | Https.Server; 
-        console.log("Bind to:", url.href);
-        if (url.protocol == "wss:") { 
-        //console.log(">>>>>>>>>>>>>",context.config.server.httpsOptions);
-          //let httpserver = Https.createServer(context.config.server.httpsOptions);
-          //httpserver.listen(+url.port, url.hostname);
-          //ret.wss = new WebSocket.Server({ server: httpserver});
-        } else {
-          let httpserver = Http.createServer();
-          httpserver.listen(+url.port, url.hostname);
-          ret.wss = new WebSocket.Server({ server: httpserver});
+        for (let bind of context.config.server.binds) {
+          console.log("Bind to:", bind.url.href);
+          let httpserver : Http.Server | Https.Server;
+          if (bind.url.protocol == "wss:") {
+          //console.log(">>>>>>>>>>>>>",context.config.server.httpsOptions);
+            bind.httpsOptions.requestCert = true;
+            bind.httpsOptions.rejectUnauthorized = false;
+            httpserver = Https.createServer(bind.httpsOptions);
+          } else {
+            httpserver = Http.createServer();
+          }
+          httpserver.listen(+bind.url.port, bind.url.hostname);
+          httpserver.on("request", (request: any, response: any) => { 
+            if (request.client.authorized) {
+                response.end('Welcome to Posco:' + request.url);
+            } else {
+                response.end('You are unknown to Posco:' + request.url);
+            }
+          });
+          let wss = new WebSocket.Server({ server: httpserver});
+          wss.on('connection', (ws) => {
+              console.log((<any>(ws))._socket.getCipher());
+              console.log((<any>(ws))._socket.getPeerCertificate());
+              console.log((<any>(ws))._socket.authorized, (<any>(ws))._socket.authorizationError);
+              ws.on('message', (message) => { ret.processMessage(ws, message) });
+          });
+          ret.wsss.push(wss);
         }
-        ret.wss.on('connection', (ws) => {
-            ws.on('message', (message) => { ret.processMessage(ws, message) });
-        });
         return ret;
     }
 

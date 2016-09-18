@@ -4,9 +4,6 @@
 
 
 npm install
-npm run build:watch
-tsd install websocket
-tsd install chai
-tsd install mocha
-tsd install ws
+npm run build
+.... npm run build:watch
 

@@ -20,41 +20,57 @@ export class Tunator {
   }
 }
 
-export class Server implements WebSocket.IServerOptions {
+export class HttpsOptions {
+  public static fromJson(obj: any) : Https.ServerOptions {
+    if (!obj) {
+      return null;
+    }
+    return {
+        key: fs.readFileSync(obj.key).toString() || "",
+        cert: fs.readFileSync(obj.cert).toString() || ""
+      }
+  }
+}
+
+export class Bind {
+  public url : Url.Url;
+  public httpsOptions: Https.ServerOptions;
+  public static fromJson(obj: any) : Bind {
+    let ret = new Bind();
+    ret.url = Url.parse(obj.url||"ws://0.0.0.0:4711");
+    ret.httpsOptions = HttpsOptions.fromJson(obj.httpsOptions);
+    return ret;
+  }
+}
+
+// implements WebSocket.IServerOptions
+export class Server {
   public port: number = 8080;
   public tunator: Tunator;
   public ipStore: IpStore;
-  public bindUrl: Url.Url;
-  public httpsOptions?: Https.ServerOptions;
+  public binds: Bind[] = [];
   public static fromJson(obj: any) : Server {
     let ret = new Server();
     ret.port = obj.port || ret.port;
     ret.tunator = Tunator.fromJson(obj.tunator||{});
     ret.ipStore = IpStore.fromJson(obj.ipStore||{});
-    ret.bindUrl = Url.parse(obj.bindUrl||"ws://0.0.0.0:4711");
-    if (obj.httpsOptions) {
-      ret.httpsOptions = {
-        key: (obj.httpsOptions.key && fs.readFileSync(obj.httpsOptions.key).toString()) || "",
-        cert: (obj.httpsOptions.cert && fs.readFileSync(obj.httpsOptions.cert).toString()) || ""
-      }
+    for (let bind of (obj.binds||[{url: "ws://0.0.0.0:4711"}])) {
+      // console.log(">>>>", bind);
+      ret.binds.push(Bind.fromJson(bind));
     }
     return ret;
   }
 }
 
 export class Client {
-  public url: string = "ws://localhost:8080/posco";
+  public url: Url.Url;
+  public httpsOptions: Https.ServerOptions;
   public tunator: Tunator;
   public static fromJson(obj: any) : Client {
     let ret = new Client();
-    ret.url = obj.url || ret.url;
-    let clientOfs = process.argv.indexOf("client"); 
-    if (clientOfs > 0) {
-	if (process.argv[clientOfs+1]) {
-		ret.url = process.argv[clientOfs+1];
-	}
-    }
+    ret.url = Url.parse(obj.url||"ws://localhost:4711");
     ret.tunator = Tunator.fromJson(obj.tunator||{});
+    ret.httpsOptions = HttpsOptions.fromJson(obj.httpsOptions);
     return ret;
   }
 }

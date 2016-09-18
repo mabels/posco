@@ -1,8 +1,23 @@
 {
   "server" : {
-    "bindUrl": "ws://0.0.0.0:8080",
-    "httpsOptions": {
-    },
+    "binds": [
+      { "url": "ws://0.0.0.0:8080" },
+      { "url": "ws://0.0.0.0:8081" },
+      { 
+        "url": "wss://0.0.0.0:8443", 
+        "httpsOptions": {
+          "key": "posco-srv.key.pem",
+          "cert": "posco-srv.cert.pem"
+        }
+      },
+      { 
+        "url": "wss://[::]:8443", 
+        "httpsOptions": {
+          "key": "posco-srv.key.pem",
+          "cert": "posco-srv.cert.pem"
+        }
+      }
+    ],
     "tunator": {
         "url": "ws://127.0.0.1:4711/tunator",
         "myAddr": {
@@ -16,7 +31,17 @@
     }
   },
   "client" : {
+<<<<<<< b7c7c448a85bc8309b58ce0111fcfafa1414cd79
     "url": "ws://10.24.1.176:8080/posco",
+||||||| merged common ancestors
+    "url": "ws://localhost:8080/posco",
+=======
+    "url": "wss://localhost:8443/posco",
+    "httpsOptions": {
+      "key": "posco-clt.key.pem",
+      "cert": "posco-clt.cert.pem"
+    },
+>>>>>>> * client certificates
     "tunator": {
         "url": "ws://127.0.0.1:4711/tunator"
     }

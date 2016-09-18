@@ -35,6 +35,7 @@ const enum ProtoFamily { AF_INET, AF_INET6 };
 
 export class IfAddrs implements AsJson {
   public mtu: Number = 1360;
+  public remoteAddress : IPAddress;
   public dests: IPAddress[] = [];
   public addrs: IPAddress[] = [];
   public routes: RouteVia[] = [];
@@ -97,6 +98,7 @@ export class IfAddrs implements AsJson {
   public asJson() : Object {
     return {
       "mtu" : this.mtu,
+      "remoteAddress" : this.remoteAddress&&this.remoteAddress.to_s(),
       "dests" : this.dests.map(i => i.to_s()),
       "addrs" : this.addrs.map(i => i.to_string()),
       "routes" : this.routes.map(i => i.asJson())
@@ -106,6 +108,7 @@ export class IfAddrs implements AsJson {
   public static fromJson(obj: any) : IfAddrs  {
     let ret = new IfAddrs();
     ret.mtu = obj['mtu'];
+    ret.remoteAddress = obj['remoteAddress'];
     if (obj['dests']) {
       if (!ret.setDests(obj['dests'].map((i:string) => IPAddress.parse(i)))) {
         console.error("dest not valid");

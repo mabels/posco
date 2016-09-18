@@ -1,9 +1,12 @@
+import * as Https from 'https';
+import * as Tls from 'tls';
 
 import * as WebSocket from 'ws';
 import PoscoContext from './posco_context';
 import Posco from './posco';
 import * as Packet from './packet';
 import * as IfAddrs from './if_addrs';
+import IPAddress from 'ipaddress';
 import * as Config from './config';
 import TunatorConnector from './tunator_connector';
 
@@ -19,8 +22,9 @@ class PoscoClient extends Posco {
     }
 
     public open() {
-      console.log("PoscoClient open:", this.config.url);
-      this.ws = new WebSocket(this.config.url);
+      console.log("PoscoClient open:", this.config.url.href, 
+        !!(this.config.httpsOptions && this.config.httpsOptions.key && this.config.httpsOptions.cert));
+      this.ws = new WebSocket(this.config.url.href, this.config.httpsOptions||{});
     }
 
     public static main(context: PoscoContext) : PoscoClient {
@@ -32,12 +36,16 @@ class PoscoClient extends Posco {
         });
         pc.on('receiveJSON', (ws: WebSocket, jPack: Packet.JsonPacket) => {
             if (jPack.action == "res-connection") {
+                console.log((<any>(ws))._socket.getCipher());
+                console.log((<any>(ws))._socket.getPeerCertificate());
+
                 let ifAddr = IfAddrs.IfAddrs.fromJson(jPack.data);
                 context.config.client.tunator.myAddr = ifAddr;
                 if (pc.tunatorConnector) {
                     console.error("duplicated: es-connection");
                     return;
                 }
+                ifAddr.remoteAddress = IPAddress.parse((<any>ws)._socket.remoteAddress);
                 pc.tunatorConnector = TunatorConnector.connect(context.config.client.tunator);
                 pc.tunatorConnector.on("receivePAKT", (xx: WebSocket, packet: Packet.PackData) => {
                     //console.log("ws.sendPacket:", packet);
@@ -48,12 +56,6 @@ class PoscoClient extends Posco {
                 console.error("unknown message:", jPack.action);
             }
         });
-
-        // process.on('uncaughtException', function (err) {
-        //     pc.ws = null;
-        //     console.log(err);
-        //     setTimeout(() => { pc.open() }, 1000);
-        // });
 
         pc.open();
         pc.ws.on('error', (error) => {
