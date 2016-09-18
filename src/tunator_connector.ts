@@ -3,13 +3,14 @@
 
 import * as WebSocket from 'ws';
 import PoscoContext from './posco_context';
-import Packet from './packet';
+import * as Packet from './packet';
 
 import * as events from 'events';
 import * as Config from './config';
 import Posco from './posco';
+import TunDevice from './tun_device';
 
-interface CbPacket { (pack: Packet): void }
+interface CbPacket { (pack: Packet.Packet ): void }
 
 class TunatorConnector extends Posco {
     public client: WebSocket;
@@ -34,8 +35,21 @@ class TunatorConnector extends Posco {
       });
       this.client.on('open', () => {
           console.log('TunatorConnector WebSocket Client Connected', this.config.myAddr.asJson());
-          Packet.sendJson(this.client, "init", this.config.myAddr);
+          Packet.Packet.sendJson(this.client, "init", this.config.myAddr);
       });
+
+      this.on("receiveJSON", (ws: WebSocket, jPack: Packet.JsonPacket) => {
+            console.log("jPack", jPack);
+            if (jPack.action == "init-res") {
+                let tunDevice = TunDevice.fromJson(jPack.data);
+                if (tunDevice.tunDevName == "") {
+                    
+                }
+                // if (jPack)
+            }
+      });
+
+
       console.log("TunatorConnector }open:", this.config.url);
     }
 

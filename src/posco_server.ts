@@ -62,11 +62,7 @@ class PoscoServer extends Posco {
                 console.error("unknown pakt");
             }
         });
-        tc.on("receiveJSON", (ws: WebSocket, jPack: Packet.JsonPacket) => {
-            console.log("jPack", jPack);
-        });
-
-        ps.on('receivePAKT', (ws: WebSocket, bPack: Packet.BinPacket) => {
+         ps.on('receivePAKT', (ws: WebSocket, bPack: Packet.BinPacket) => {
             Packet.Packet.sendPakt(tc.client, bPack);
         });
         ps.on('receiveJSON', (ws: WebSocket, jPack: Packet.JsonPacket) => {
