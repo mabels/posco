@@ -80,9 +80,9 @@ export class Config {
   public server: Server;
   public client: Client;
 
-  public static read(fname: string) : Config {
+ public static readFromString(str: string) : Config {
     let ret = new Config();
-    let obj = JSON.parse(fs.readFileSync(fname).toString());
+    let obj = JSON.parse(str);
     ret.server = Server.fromJson(obj.server||{});
     ret.client = Client.fromJson(obj.client||{});
     return ret;
