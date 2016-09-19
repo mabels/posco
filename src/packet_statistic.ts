@@ -37,9 +37,9 @@ export class PacketStatistic {
 
   public static fromJson(obj: any): PacketStatistic {
     let ret = new PacketStatistic();
-    ret.started = new Date(obj.started);
-    ret.current = PacketStatisticData.fromJson(obj.current);
-    ret.total = PacketStatisticData.fromJson(obj.total);
+    ret.started = new Date(obj.started||0);
+    ret.current = PacketStatisticData.fromJson(obj.current||{});
+    ret.total = PacketStatisticData.fromJson(obj.total||{});
     return ret;
   }
 }

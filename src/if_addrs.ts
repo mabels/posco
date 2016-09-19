@@ -107,8 +107,8 @@ export class IfAddrs implements AsJson {
 
   public static fromJson(obj: any) : IfAddrs  {
     let ret = new IfAddrs();
-    ret.mtu = obj['mtu'];
-    ret.remoteAddress = obj['remoteAddress'];
+    ret.mtu = ~~obj['mtu'];
+    ret.remoteAddress = obj['remoteAddress'] && IPAddress.parse(obj['remoteAddress']);
     if (obj['dests']) {
       if (!ret.setDests(obj['dests'].map((i:string) => IPAddress.parse(i)))) {
         console.error("dest not valid");
@@ -131,7 +131,5 @@ export class IfAddrs implements AsJson {
     }
     return ret;
   }
-
-
 }
 

@@ -7,8 +7,8 @@ export class PacketQueue {
   ps: PacketStatistic;
   public static fromJson(obj: any) : PacketQueue {
     let ret = new PacketQueue();
-    ret.pb = PacketBuffer.fromJson(obj.pb);
-    ret.ps = PacketStatistic.fromJson(obj.ps);
+    ret.pb = PacketBuffer.fromJson(obj['pb']||{});
+    ret.ps = PacketStatistic.fromJson(obj['ps']||{});
     return ret;
   }
 }
