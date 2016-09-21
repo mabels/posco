@@ -18,7 +18,7 @@ module SniProxy
 
         def interfaces(host, ifname, iface, writer, family = nil)
           return unless iface.address
-          puts "hello world #{@name}"
+          puts "#{@service.name} #{host.name} #{ifname}"
           #                host.result.add(self, <<MAINCF, Construqt::Resources::Rights.root_0644(Construqt::Resources::Component::POSTFIX), "etc", "postfix", "main.cf")
           ## #{@service.get_server_iface.host.name} #{@service.get_server_iface.address.first_ipv4}
           #inet_protocols = all

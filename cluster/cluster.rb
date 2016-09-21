@@ -68,23 +68,22 @@ region = setup_region("winsen", network)
 
 base = 200;
 
+etcbinds = [0,1,2].map do |i|
+  ship = make_ship(region, {
+    'name'      => "etcbind-#{i}",
+    'ifname'    => "eth0",
+    'ipv4_addr' => "10.24.1.#{base}/24",
+    'ipv4_gw'   => "10.24.1.1",
+    'ipv6_addr' => "fd00::10:24:1:#{base}/64",
+    'ipv6_gw'   => "fd00::10:24:1:1",
+    'ipv4_hostnet' => "10.25.2.1/24"
+  })
 
-ship = make_ship(region, {
-  'name'      => "posco-01",
-  'ifname'    => "eth0",
-  'ipv4_addr' => "10.24.1.#{base}/24",
-  'ipv4_gw'   => "10.24.1.1",
-  'ipv6_addr' => "fd00::10:24:1:#{base}/64",
-  'ipv6_gw'   => "fd00::10:24:1:1",
-  'ipv4_hostnet' => "10.25.2.1/24"
-})
-
-dnss = [0,1].map do |i|
   make_service(region, {
     'service'   => "DNS",
     'mother'    => ship,
     'mother_if' => "br0",
-    'name'      => "dns-#{i}",
+    'name'      => "dns-#{j}-#{i}",
     'ifname'    => "eth0",
     'rndc_key'  => "total geheim",
     'domains'   => [{'name'=>'construqt.net','basefile'=>'costruqt.net.zone'}],
@@ -93,76 +92,84 @@ dnss = [0,1].map do |i|
     'ipv6_addr' => "fd00::10:24:1:#{base+4+i}/64#DNS_S",
     'ipv6_gw'   => "fd00::10:24:1:1",
   })
-end
-
-etcds = [0,1,2].map do |i|
   make_service(region, {
     'service'   => "ETCD",
     'mother'    => ship,
     'mother_if' => "br0",
-    'name'      => "etcd-#{i}",
+    'name'      => "etcd-#{j}-#{i}",
     'ifname'    => "eth0",
     'rndc_key'  => "total geheim",
     'domains'   => [{'name'=>'construqt.net','basefile'=>'costruqt.net.zone'}],
     'ipv6_addr' => "fd00::10:24:1:#{base+8+i}/64#ETCD_S",
     'ipv6_gw'   => "fd00::10:24:1:1",
   })
-end
 
-certor = [0].map do |i|
   make_service(region, {
     'service'   => "CERTOR",
     'mother'    => ship,
     'mother_if' => "br0",
-    'name'      => "certor-#{i}",
+    'name'      => "certor-#{j}-#{i}",
     'ifname'    => "eth0",
     'rndc_key'  => "total geheim",
     'domains'   => [{'name'=>'construqt.net','basefile'=>'costruqt.net.zone'}],
     'ipv6_addr' => "fd00::10:24:1:#{base+12+i}/64#ETCD_S",
     'ipv6_gw'   => "fd00::10:24:1:1",
   })
+
+  ship
 end
 
-sniproxies = [0].map do |i|
-  make_service(region, {
-    'service'   => "SNIPROXY",
-    'mother'    => ship,
-    'mother_if' => "br0",
-    'name'      => "sniproxy-#{i}",
+vips = [0,1].map do |j|
+  ship = make_ship(region, {
+    'name'      => "vips-#{j}",
     'ifname'    => "eth0",
-    'rndc_key'  => "total geheim",
-    'domains'   => [{'name'=>'construqt.net','basefile'=>'costruqt.net.zone'}],
-    'ipv6_addr' => "fd00::10:24:1:#{base+16+i}/64#ETCD_S",
+    'ipv4_addr' => "10.24.1.#{base}/24",
+    'ipv4_gw'   => "10.24.1.1",
+    'ipv6_addr' => "fd00::10:24:1:#{base}/64",
     'ipv6_gw'   => "fd00::10:24:1:1",
+    'ipv4_hostnet' => "10.25.2.1/24"
   })
-end
+  sniproxies = [0].map do |i|
+    make_service(region, {
+      'service'   => "SNIPROXY",
+      'mother'    => ship,
+      'mother_if' => "br0",
+      'name'      => "sniproxy-#{j}-#{i}",
+      'ifname'    => "eth0",
+      'rndc_key'  => "total geheim",
+      'domains'   => [{'name'=>'construqt.net','basefile'=>'costruqt.net.zone'}],
+      'ipv6_addr' => "fd00::10:24:1:#{base+16+i}/64#ETCD_S",
+      'ipv6_gw'   => "fd00::10:24:1:1",
+    })
+  end
 
-poscos = [0].map do |i|
-  make_service(region, {
-    'service'   => "POSCO",
-    'mother'    => ship,
-    'mother_if' => "br0",
-    'name'      => "poscos-#{i}",
-    'ifname'    => "eth0",
-    'rndc_key'  => "total geheim",
-    'domains'   => [{'name'=>'construqt.net','basefile'=>'costruqt.net.zone'}],
-    'ipv6_addr' => "fd00::10:24:1:#{base+24+i}/64#ETCD_S",
-    'ipv6_gw'   => "fd00::10:24:1:1",
-  })
-end
+  poscos = [0].map do |i|
+    make_service(region, {
+      'service'   => "POSCO",
+      'mother'    => ship,
+      'mother_if' => "br0",
+      'name'      => "poscos-#{j}-#{i}",
+      'ifname'    => "eth0",
+      'rndc_key'  => "total geheim",
+      'domains'   => [{'name'=>'construqt.net','basefile'=>'costruqt.net.zone'}],
+      'ipv6_addr' => "fd00::10:24:1:#{base+24+i}/64#ETCD_S",
+      'ipv6_gw'   => "fd00::10:24:1:1",
+    })
+  end
 
-tunators = [0].map do |i|
-  make_service(region, {
-    'service'   => "TUNATOR",
-    'mother'    => ship,
-    'mother_if' => "br0",
-    'name'      => "tunators-#{i}",
-    'ifname'    => "eth0",
-    'rndc_key'  => "total geheim",
-    'domains'   => [{'name'=>'construqt.net','basefile'=>'costruqt.net.zone'}],
-    'ipv6_addr' => "fd00::10:24:1:#{base+28+i}/64#ETCD_S",
-    'ipv6_gw'   => "fd00::10:24:1:1",
-  })
+  tunators = [0].map do |i|
+    make_service(region, {
+      'service'   => "TUNATOR",
+      'mother'    => ship,
+      'mother_if' => "br0",
+      'name'      => "tunators-#{j}-#{i}",
+      'ifname'    => "eth0",
+      'rndc_key'  => "total geheim",
+      'domains'   => [{'name'=>'construqt.net','basefile'=>'costruqt.net.zone'}],
+      'ipv6_addr' => "fd00::10:24:1:#{base+28+i}/64#ETCD_S",
+      'ipv6_gw'   => "fd00::10:24:1:1",
+    })
+  end
 end
 
 Construqt.produce(region)
