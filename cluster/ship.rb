@@ -11,11 +11,16 @@
 }
 =end
 def make_ship(region, parameter)
-    return region.hosts.add(parameter['name'], "flavour" => "nixian", "dialect" => "ubuntu") do |host|
+    return region.hosts.add(parameter['name'], "flavour" => "nixian",
+                            "dialect" => "ubuntu",
+                            "packager" => true,
+                           "vagrant_deploy" =>
+              Construqt::Hosts::Vagrant.new.box("ubuntu/xenial64")
+               .add_cfg('config.vm.network "public_network", bridge: "bridge0"')
+     ) do |host|
       region.interfaces.add_device(host, "lo", "mtu" => "9000",
                                    :description=>"#{host.name} lo",
                                    "address" => region.network.addresses.add_ip(Construqt::Addresses::LOOOPBACK))
-      eth0 = region.interfaces.add_device(host, parameter['ifname'], "mtu" => 1500)
       host.configip = host.id ||= Construqt::HostId.create do |my|
         addr = region.network.addresses
         if parameter['ipv4_addr'] == "DHCP"
@@ -23,16 +28,19 @@ def make_ship(region, parameter)
         else
           addr = addr.add_ip(parameter['ipv4_addr'])
         end
-        addr = addr.add_ip(parameter['ipv4_hostnet'])
         if parameter['ipv4_gw']
           addr = addr.add_route("0.0.0.0/0", parameter['ipv4_gw'])
         end
         addr = addr.add_ip(parameter['ipv6_addr'])
         addr = addr.add_route("2000::/3", parameter['ipv6_gw'])
-        my.interfaces << region.interfaces.add_bridge(host, "br0", "mtu" => 1500,
-                                                      "interfaces" => [eth0],
+        my.interfaces << region.interfaces.add_device(host, parameter['ifname'], "mtu" => 1500,
                                                       "address" => addr)
       end
+      region.interfaces.add_bridge(host, "br169", "mtu" => 1500,
+                   "interfaces" => [],
+                   "address" => region.network.addresses
+                        .add_ip(parameter['ipv4_intern'])
+                        .add_ip(parameter['ipv6_intern']))
     end
 end
 

@@ -11,7 +11,8 @@
 =end
 def make_service(region, parameter)
     return region.hosts.add(parameter['name'], "flavour" => "nixian", "dialect" => "ubuntu",
-                            "mother" => parameter['mother']) do |host|
+                            "mother" => parameter['mother'],
+                            "lxc_deploy" => Construqt::Hosts::Lxc.new.restart.killstop) do |host|
       region.interfaces.add_device(host, "lo", "mtu" => "9000",
                                    :description=>"#{host.name} lo",
                                    "address" => region.network.addresses.add_ip(Construqt::Addresses::LOOOPBACK))
@@ -23,10 +24,10 @@ def make_service(region, parameter)
         addr = addr.add_route("2000::/3", parameter['ipv6_gw'])
 
         my.interfaces << iface = region.interfaces.add_device(host, "eth0", "mtu" => 1500,
-                                                      "address" => addr)
-        region.cables.add(iface, region.interfaces.find(parameter['mother'], parameter['mother_if']))
+            "plug_in" => Construqt::Cables::Plugin.new.iface(parameter['mother'].interfaces.find_by_name(parameter['mother_if'])),
+            "address" => addr)
+        #region.cables.add(iface, region.interfaces.find(parameter['mother'], parameter['mother_if']))
         iface.services.push(region.services.find(parameter['service']).server_iface(iface))
       end
     end
 end
-
