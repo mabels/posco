@@ -29,12 +29,18 @@ def make_ship(region, parameter)
           addr = addr.add_ip(parameter['ipv4_addr'])
         end
         if parameter['ipv4_gw']
-          addr = addr.add_route("0.0.0.0/0", parameter['ipv4_gw'])
+          addr = addr.add_route("0.0.0.0/0#INTERNET", parameter['ipv4_gw'])
         end
         addr = addr.add_ip(parameter['ipv6_addr'])
-        addr = addr.add_route("2000::/3", parameter['ipv6_gw'])
+        addr = addr.add_route("2000::/3#INTERNET", parameter['ipv6_gw'])
+        addr = addr.add_route("fd00::/8#INTERNET", parameter['ipv6_gw'])
+
         my.interfaces << region.interfaces.add_device(host, parameter['ifname'], "mtu" => 1500,
-                                                      "address" => addr)
+              "address" => addr,
+              'proxy_neigh' => Construqt::Tags.resolver_adr(parameter['proxy_neigh_host'], Construqt::Addresses::IPV6),
+              "firewalls" => ["host-outbound", "icmp-ping", "ssh-srv"]+
+                            (parameter['firewalls']||[]) +
+                            ["block"])
       end
       region.interfaces.add_bridge(host, "br169", "mtu" => 1500,
                    "interfaces" => [],
