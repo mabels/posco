@@ -7,7 +7,11 @@ module Etcd
     def initialize(name)
       @name = name
     end
+    def self.add_component(cps)
+      cps.register(Etcd::Service).add('etcd')
+    end
   end
+
 
   module Renderer
     module Nixian
@@ -17,9 +21,8 @@ module Etcd
         end
 
         def interfaces(host, ifname, iface, writer, family = nil)
-          return unless iface.address
           puts "#{@service.name} #{host.name} #{ifname} #{Construqt::Tags.find("ETCD_S").map{|i| i.to_s }}"
-          #                host.result.add(self, <<MAINCF, Construqt::Resources::Rights.root_0644(Construqt::Resources::Component::POSTFIX), "etc", "postfix", "main.cf")
+          host.result.add(self, "xx", Construqt::Resources::Rights.root_0644(Etcd::Service), "etc", "postfix", "main.cf")
           ## #{@service.get_server_iface.host.name} #{@service.get_server_iface.address.first_ipv4}
           #inet_protocols = all
           #myhostname = #{iface.host.name}
