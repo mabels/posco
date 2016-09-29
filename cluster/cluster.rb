@@ -12,6 +12,7 @@ CONSTRUQT_PATH = ENV['CONSTRUQT_PATH'] || '../../'
   "#{CONSTRUQT_PATH}/construqt/flavours/gojs/lib",
   "#{CONSTRUQT_PATH}/construqt/flavours/nixian/core/lib",
   "#{CONSTRUQT_PATH}/construqt/flavours/nixian/dialects/ubuntu/lib",
+  "#{CONSTRUQT_PATH}/construqt/flavours/nixian/dialects/coreos/lib",
   "#{CONSTRUQT_PATH}/construqt/flavours/mikrotik/lib",
   "#{CONSTRUQT_PATH}/construqt/flavours/ciscian/core/lib",
   "#{CONSTRUQT_PATH}/construqt/flavours/ciscian/dialects/hp/lib",
@@ -21,6 +22,7 @@ require 'rubygems'
 require 'construqt'
 require 'construqt/flavour/nixian'
 require 'construqt/flavour/nixian/dialect/ubuntu'
+require 'construqt/flavour/nixian/dialect/coreos'
 
 require_relative 'ship.rb'
 require_relative 'service.rb'
@@ -30,6 +32,7 @@ def setup_region(name, network)
   region = Construqt::Regions.add(name, network)
   nixian = Construqt::Flavour::Nixian::Factory.new
   nixian.add_dialect(Construqt::Flavour::Nixian::Dialect::Ubuntu::Factory.new)
+  nixian.add_dialect(Construqt::Flavour::Nixian::Dialect::CoreOs::Factory.new)
   region.flavour_factory.add(nixian)
   if ARGV.include?('plantuml')
     require 'construqt/flavour/plantuml.rb'
@@ -193,6 +196,7 @@ vips = [
   ),
   pullUp(
     'name' => 'us-0',
+    'dialect' => 'coreos',
     'ipv4_extern' => '10.24.1.212/24',
     'ipv4_addr' => '10.24.1.212/24',
     'ipv4_gw' => '10.24.1.1',

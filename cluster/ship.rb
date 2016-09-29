@@ -12,7 +12,7 @@
 =end
 def make_ship(region, parameter)
     return region.hosts.add(parameter['name'], "flavour" => "nixian",
-                            "dialect" => "ubuntu",
+                            "dialect" => parameter['dialect']||"ubuntu",
                             "packager" => true,
                            "vagrant_deploy" =>
               Construqt::Hosts::Vagrant.new.box("ubuntu/xenial64")
