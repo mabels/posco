@@ -147,6 +147,19 @@ def mother_firewall(name)
     fw.nat do |nat|
       nat.add.prerouting.action(Construqt::Firewalls::Actions::DNAT).ipv6.ipv4
         .from_net("#INTERNET").to_me
+        .tcp.dport(443).to_dest("##{name}-CERTOR_MAPPED").from_is_outside
+    end
+    fw.forward do |fwd|
+      fwd.add.action(Construqt::Firewalls::Actions::ACCEPT).connection
+        .from_net("#INTERNET")
+        .to_host("##{name}-CERTOR_MAPPED")
+        .tcp.dport(443).from_is_outside
+    end
+  end
+  Construqt::Firewalls.add("#{name}-map-https-8443") do |fw|
+    fw.nat do |nat|
+      nat.add.prerouting.action(Construqt::Firewalls::Actions::DNAT).ipv6.ipv4
+        .from_net("#INTERNET").to_me
         .tcp.dport(443).to_dest("##{name}-CERTOR_MAPPED", 8443).from_is_outside
     end
     fw.host do |fwd|
@@ -156,6 +169,7 @@ def mother_firewall(name)
         .tcp.dport(8443).from_is_outside
     end
   end
+
   Construqt::Firewalls.add("#{name}-ipv6-etcd") do |fw|
     fw.forward do |fwd|
       fwd.add.action(Construqt::Firewalls::Actions::ACCEPT).connection.ipv6

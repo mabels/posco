@@ -158,7 +158,7 @@ etcbinds = [
                'mother'    => ship,
                'mother_if' => 'br169',
                'name'      => "certor-#{j.name}",
-               'firewalls' => ["#{j.name}-ipv4-map-certor"],
+               'firewalls' => ["#{j.name}-map-https-8443"],
                'ifname'    => 'eth0',
                'rndc_key'  => 'total geheim',
                'domains'   => [{ 'name' => 'construqt.net', 'basefile' => 'costruqt.net.zone' }],
