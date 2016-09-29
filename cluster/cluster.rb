@@ -205,6 +205,8 @@ vips = [
   ship = make_ship(region, 'name' => "vips-#{j.name}",
                    'ifname'    => 'enp0s8',
                    'firewalls' => ["#{j.name}-ipv4-map-sni", "#{j.name}-posco"],
+                   'proxy_neigh_host' => "##{j.name}_SNI_S##{j.name}_POSCO_S##{j.name}_TUNATOR_S",
+                   'proxy_neigh_net' => "##{j.name}_TUNATOR_S_NET",
                    'ipv4_addr' => "#{j.ipv4_addr.to_string}#DNS_S#CERTOR_S",
                    'ipv4_gw'   => j.ipv4_gw.to_s,
                    'ipv6_addr' => j.ipv6_addr.to_string,
@@ -221,7 +223,7 @@ vips = [
                'ifname'    => 'eth0',
                'rndc_key'  => 'total geheim',
                'domains'   => [{ 'name' => 'construqt.net', 'basefile' => 'costruqt.net.zone' }],
-               'ipv6_addr' => "#{ipv6.to_string}#SNIPROXY_S##{j.name}-SNI_MAPPED",
+               'ipv6_addr' => "#{ipv6.to_string}#SNIPROXY_S##{j.name}-SNI_MAPPED##{j.name}_SNI_S",
                'ipv6_gw'   => j.ipv6_intern.to_string)
   ipv4 = ipv4.inc
   ipv6 = ipv6.inc
@@ -233,11 +235,14 @@ vips = [
                'ifname'    => 'eth0',
                'rndc_key'  => 'total geheim',
                'domains'   => [{ 'name' => 'construqt.net', 'basefile' => 'costruqt.net.zone' }],
-               'ipv6_addr' => "#{ipv6.to_string}#POSCO_S##{j.name}-posco##{j.name}-POSCO_MAPPED",
+               'ipv6_addr' => "#{ipv6.to_string}#POSCO_S##{j.name}-posco##{j.name}-POSCO_MAPPED##{j.name}_POSCO_S",
                'ipv6_gw'   => j.ipv6_intern.to_string)
   ipv4 = ipv4.inc
   ipv6 = ipv6.inc
   tunator_firewall(j.name)
+  tunator_block_ofs = j.ipv6_intern.size().shr(1)
+  tunator_block = j.ipv6_intern.network.add_num(tunator_block_ofs).change_prefix(119)
+  region.network.addresses.add_ip("#{tunator_block.to_string}##{j.name}_TUNATOR_S_NET")
   make_service(region, 'service' => 'TUNATOR',
                'mother'    => ship,
                'mother_if' => 'br169',
@@ -246,9 +251,10 @@ vips = [
                'ifname'    => 'eth0',
                'rndc_key'  => 'total geheim',
                'domains'   => [{ 'name' => 'construqt.net', 'basefile' => 'costruqt.net.zone' }],
+               'ipv6_proxy_neigh' => "##{j.name}_TUNATOR_S_NET",
                'ipv4_addr' => "#{ipv4.to_string}",
                'ipv4_gw'   => j.ipv4_intern.to_string,
-               'ipv6_addr' => "#{ipv6.to_string}#TUNATOR_S##{j.name}-tunator",
+               'ipv6_addr' => "#{ipv6.to_string}#TUNATOR_S##{j.name}-tunator##{j.name}_TUNATOR_S",
                'ipv6_gw'   => j.ipv6_intern.to_string)
 end
 

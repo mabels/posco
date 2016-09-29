@@ -24,12 +24,21 @@ def make_service(region, parameter)
         addr = addr.add_route("2000::/3", parameter['ipv6_gw'])
         addr = addr.add_route("fd00::/8", parameter['ipv6_gw'])
 
-        my.interfaces << iface = region.interfaces.add_device(host, "eth0", "mtu" => 1500,
+
+        p = {
+            "mtu" => 1500,
             "plug_in" => Construqt::Cables::Plugin.new.iface(parameter['mother'].interfaces.find_by_name(parameter['mother_if'])),
             "firewalls" => ["host-outbound", "icmp-ping", "ssh-srv"]+
                             (parameter['firewalls']||[]) +
                             ["block"],
-            "address" => addr)
+            "address" => addr
+        }
+        if parameter['ipv6_proxy_neigh']
+          #binding.pry
+          p['proxy_neigh'] = Construqt::Tags.resolver_net(parameter['ipv6_proxy_neigh'], Construqt::Addresses::IPV6)
+        end
+
+        my.interfaces << iface = region.interfaces.add_device(host, "eth0", p)
         #region.cables.add(iface, region.interfaces.find(parameter['mother'], parameter['mother_if']))
         iface.services.push(region.services.find(parameter['service']).server_iface(iface))
       end
