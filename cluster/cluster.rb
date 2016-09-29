@@ -197,6 +197,7 @@ vips = [
   pullUp(
     'name' => 'us-0',
     'dialect' => 'coreos',
+    'iface' => 'eth1',
     'ipv4_extern' => '10.24.1.212/24',
     'ipv4_addr' => '10.24.1.212/24',
     'ipv4_gw' => '10.24.1.1',
@@ -207,7 +208,8 @@ vips = [
   )
 ].map do |j|
   ship = make_ship(region, 'name' => "vips-#{j.name}",
-                   'ifname'    => 'enp0s8',
+                   'ifname'    => j.iface||'enp0s8',
+                   'dialect'   => j.dialect,
                    'firewalls' => ["#{j.name}-ipv4-map-sni", "#{j.name}-posco"],
                    'proxy_neigh_host' => "##{j.name}_SNI_S##{j.name}_POSCO_S##{j.name}_TUNATOR_S",
                    'proxy_neigh_net' => "##{j.name}_TUNATOR_S_NET",
