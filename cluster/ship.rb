@@ -38,7 +38,7 @@ def make_ship(region, parameter)
         my.interfaces << region.interfaces.add_device(host, parameter['ifname'], "mtu" => 1500,
               "address" => addr,
               'proxy_neigh' => Construqt::Tags.resolver_adr_net(parameter['proxy_neigh_host'], parameter['proxy_neigh_net'], Construqt::Addresses::IPV6),
-              "firewalls" => ["host-outbound", "icmp-ping", "ssh-srv"]+
+              "firewalls" => ["host-outbound", "icmp-ping", "ssh-srv", "border-masq"]+
                             (parameter['firewalls']||[]) +
                             ["block"])
         #binding.pry
