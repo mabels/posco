@@ -11,6 +11,7 @@
 }
 =end
 def make_ship(region, parameter)
+    #binding.pry if 'coreos' == parameter['dialect']
     return region.hosts.add(parameter['name'], "flavour" => "nixian",
                             "dialect" => parameter['dialect']||"ubuntu",
                             "packager" => true,

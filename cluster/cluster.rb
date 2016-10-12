@@ -70,6 +70,8 @@ def cluster_json
     "etcbinds":[
     {
     "name":"eu-0",
+    "dialect": "coreos",
+    "ifname": "eth1",
     "ipv4_extern":"10.24.1.200/24",
     "ipv4_addr":"10.24.1.200/24",
     "ipv4_gw":"10.24.1.1",
@@ -101,6 +103,8 @@ def cluster_json
   "vips":[
   {
     "name":"eu-0",
+    "dialect": "coreos",
+    "ifname": "eth1",
     "ipv4_extern":"10.24.1.210/24",
     "ipv4_addr":"10.24.1.210/24",
     "ipv4_gw":"10.24.1.1",
@@ -194,7 +198,8 @@ etcbinds = get_config_and_pullUp("etcbinds").map do |j|
   mother_firewall(j.name)
   ship = make_ship(region, 'name' => "etcbind-#{j.name}",
                    'firewalls' => ["#{j.name}-ipv4-map-dns", "#{j.name}-ipv4-map-certor","#{j.name}-ipv6-etcd"],
-                   'ifname'    => 'enp0s8',
+                   'ifname'    => j.ifname||'enp0s8',
+                   'dialect'   => j.dialect,
                    'proxy_neigh_host' => "##{j.name}_GW_S##{j.name}_DNS_S##{j.name}_ETCD_S##{j.name}_CERTOR_S",
                    'ipv4_addr' => "#{j.ipv4_addr.to_string}##{j.name}_DNS_S##{j.name}_CERTOR_S",
                    'ipv4_gw'   => j.ipv4_gw.to_s,
@@ -248,7 +253,7 @@ end
 
 vips = get_config_and_pullUp("vips").map do |j|
   ship = make_ship(region, 'name' => "vips-#{j.name}",
-                   'ifname'    => j.iface||'enp0s8',
+                   'ifname'    => j.ifname||'enp0s8',
                    'dialect'   => j.dialect,
                    'firewalls' => ["#{j.name}-ipv4-map-sni", "#{j.name}-posco"],
                    'proxy_neigh_host' => "##{j.name}_SNI_S##{j.name}_POSCO_S##{j.name}_TUNATOR_S",
