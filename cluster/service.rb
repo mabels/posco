@@ -12,7 +12,8 @@
 def make_service(region, parameter)
     return region.hosts.add(parameter['name'], "flavour" => "nixian", "dialect" => "ubuntu",
                             "mother" => parameter['mother'],
-                            "lxc_deploy" => Construqt::Hosts::Lxc.new.restart.killstop) do |host|
+                            "docker_deploy" => Construqt::Hosts::Docker.new
+      .image(parameter['image']).pkt_man(parameter['pkt_man']||:apt)) do |host|
       region.interfaces.add_device(host, "lo", "mtu" => "9000",
                                    :description=>"#{host.name} lo",
                                    "address" => region.network.addresses.add_ip(Construqt::Addresses::LOOOPBACK))

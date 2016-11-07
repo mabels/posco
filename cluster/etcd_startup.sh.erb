@@ -1,0 +1,19 @@
+/usr/local/bin/etcd \
+  --name <%= host.fqdn %> \
+  --data-dir /var/lib/etcd/data/<%= host.fqdn %> \
+  --debug \
+  --listen-client-urls https://[::]:2381 \
+  --advertise-client-urls <%= etcd.build_url(host, 2381) %> \
+  --listen-peer-urls https://[::]:2382 \
+  --initial-advertise-peer-urls <%= etcd.build_url(host, 2382) %> \
+  --initial-cluster-token <%= host.domain %> \
+  --initial-cluster-state=new \
+  --initial-cluster <%= etcd_s.map{|host| "#{host.fqdn}=#{etcd.build_url(host, 2382)}"}.join(",")  %> \
+  --peer-client-cert-auth \
+  --client-cert-auth \
+  --trusted-ca-file /etc/etcd/client-trusted-cas.pem \
+  --peer-trusted-ca-file /etc/etcd/peers-trusted-cas.pem \
+  --peer-cert-file /etc/letsencrypt/live/<%= host.fqdn %>/cert.pem \
+  --peer-key-file /etc/letsencrypt/live/<%= host.fqdn %>/privkey.pem \
+  --cert-file /etc/letsencrypt/live/<%= host.fqdn %>/cert.pem \
+  --key-file /etc/letsencrypt/live/<%= host.fqdn %>/privkey.pem

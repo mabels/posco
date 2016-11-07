@@ -69,7 +69,7 @@ def cluster_json
 {
     "etcbinds":[
     {
-    "name":"eu-0",
+    "name":"1",
     "dialect": "coreos",
     "ifname": "eth1",
     "ipv4_extern":"10.24.1.200/24",
@@ -81,7 +81,7 @@ def cluster_json
     "ipv6_intern":"fd00::169:254:200:1/112"
   },
   {
-    "name":"eu-1",
+    "name":"2",
     "ipv4_extern":"10.24.1.201/24",
     "ipv4_addr":"10.24.1.201/24",
     "ipv4_gw":"10.24.1.1",
@@ -91,7 +91,7 @@ def cluster_json
     "ipv6_intern":"fd00::169:254:201:1/112"
   },
   {
-    "name":"us-0",
+    "name":"3",
     "ipv4_extern":"10.24.1.202/24",
     "ipv4_addr":"10.24.1.202/24",
     "ipv4_gw":"10.24.1.1",
@@ -102,7 +102,7 @@ def cluster_json
   }],
   "vips":[
   {
-    "name":"eu-0",
+    "name":"1",
     "dialect": "coreos",
     "ifname": "eth1",
     "ipv4_extern":"10.24.1.210/24",
@@ -114,7 +114,7 @@ def cluster_json
     "ipv6_intern":"fd00::169:254:210:1/112"
   },
   {
-    "name":"eu-1",
+    "name":"2",
     "ipv4_extern":"10.24.1.211/24",
     "ipv4_addr":"10.24.1.211/24",
     "ipv4_gw":"10.24.1.1",
@@ -124,7 +124,7 @@ def cluster_json
     "ipv6_intern":"fd00::169:254:211:1/112"
   },
   {
-    "name":"us-0",
+    "name":"3",
     "ipv4_extern":"10.24.1.212/24",
     "ipv4_addr":"10.24.1.212/24",
     "ipv4_gw":"10.24.1.1",
@@ -136,8 +136,9 @@ def cluster_json
   "certs":{
     "path":"../../certs/"
   },
-  "domain":"protonet.io",
-  "email":"martin@protonet.info"
+  "cerberus": "cetcd",
+  "domain":"adviser.com",
+  "email":"meno.abels@adviser.com"
 }
 JSON
 end
@@ -227,6 +228,8 @@ etcbinds = get_config_and_pullUp("etcbinds").map do |j|
                'mother'    => ship,
                'mother_if' => 'br169',
                'name'      => "etcd-#{j.name}",
+               'image'     => 'quay.io/coreos/etcd',
+               'pkt_man'   => :apk,
                'firewalls' => ['etcd-srv'],
                'ifname'    => 'eth0',
                'rndc_key'  => 'total geheim',
@@ -239,6 +242,7 @@ etcbinds = get_config_and_pullUp("etcbinds").map do |j|
                'mother'    => ship,
                'mother_if' => 'br169',
                'name'      => "certor-#{j.name}",
+               'image'     => 'fastandfearless/certor:ubuntu-16-04-b2f0b34',
                'firewalls' => ["#{j.name}-map-https-8443"],
                'ifname'    => 'eth0',
                'rndc_key'  => 'total geheim',
@@ -270,6 +274,7 @@ vips = get_config_and_pullUp("vips").map do |j|
                'mother'    => ship,
                'mother_if' => 'br169',
                'name'      => "sniproxy-#{j.name}",
+               'image'     => 'fastandfearless/sinproxy:ubuntu-16-04-b2f0b34',
                'firewalls' => ['https-srv'],
                'ifname'    => 'eth0',
                'rndc_key'  => 'total geheim',
@@ -281,6 +286,7 @@ vips = get_config_and_pullUp("vips").map do |j|
   make_service(region, 'service' => 'POSCO',
                'mother'    => ship,
                'mother_if' => 'br169',
+               'image'     => 'fastandfearless/node:ubuntu-16-04-b2f0b34',
                'name'      => "poscos-#{j.name}",
                'firewalls' => ['https-srv'],
                'ifname'    => 'eth0',
@@ -298,6 +304,7 @@ vips = get_config_and_pullUp("vips").map do |j|
                'mother'    => ship,
                'mother_if' => 'br169',
                'name'      => "tunators-#{j.name}",
+               'image'     => 'fastandfearless/sinproxy:ubuntu-16-04-b2f0b34',
                'firewalls' => ["#{j.name}-tunator"],
                'ifname'    => 'eth0',
                'rndc_key'  => 'total geheim',
@@ -307,9 +314,9 @@ vips = get_config_and_pullUp("vips").map do |j|
                'ipv4_gw'   => j.ipv4_intern.to_string,
                'ipv6_addr' => "#{ipv6.to_string}#TUNATOR_S##{j.name}-tunator##{j.name}_TUNATOR_S",
                'ipv6_gw'   => j.ipv6_intern.to_string)
-end
 
-region.hosts.add('cerberus', "flavour" => "nixian", "dialect" => "ubuntu") do |host|
+end
+region.hosts.add(get_config()["cerberus"], "flavour" => "nixian", "dialect" => "ubuntu") do |host|
       region.interfaces.add_device(host, "lo", "mtu" => "9000",
                                    :description=>"#{host.name} lo",
                                    "address" => region.network.addresses.add_ip(Construqt::Addresses::LOOOPBACK))
@@ -321,8 +328,9 @@ region.hosts.add('cerberus', "flavour" => "nixian", "dialect" => "ubuntu") do |h
       region.interfaces.add_bridge(host, 'bridge0',"mtu" => 1500,
                                                    "interfaces" => [],
                                                    "address" => region.network.addresses.add_ip("10.24.1.1/24",
-                                                   "dhcp" => Construqt::Dhcp.new.start("10.24.1.100").end("10.24.1.110").domain("cerberus"))
-                                                     .add_ip("fd00::10:24:1:1/64"))
+                                                   "dhcp" => Construqt::Dhcp.new.start("10.24.1.100")
+                                                     .end("10.24.1.110").domain("cerberus"))
+                                                     .add_ip("fd00::10:24:1:1/64#ETCD_CLIENTS"))
     end
 
 Construqt.produce(region)

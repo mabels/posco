@@ -7,19 +7,30 @@ module SniProxy
     def initialize(name)
       @name = name
     end
+    def completed_host(host)
+      return unless host.docker_deploy
+      puts "SNI>>>>>>>>>#{host.name}"
+      host.docker_deploy.app_start_script("exec /usr/sbin/sniproxy -f")
+    end
   end
 
   module Renderer
     module Nixian
       class Ubuntu
+        DIRECTORY = File.dirname(__FILE__)
+
         def initialize(service)
           @service = service
         end
 
+
         def interfaces(host, ifname, iface, writer, family = nil)
           return unless iface.address
           puts "#{@service.name} #{host.name} #{ifname}"
-          #                host.result.add(self, <<MAINCF, Construqt::Resources::Rights.root_0644(Construqt::Resources::Component::POSTFIX), "etc", "postfix", "main.cf")
+          host.result.add(SniProxy::Service,
+              Construqt::Util.render(binding, "sniproxy.conf.erb"),
+              Construqt::Resources::Rights.root_0644(Construqt::Resources::Component::UNREF),
+              "/etc", "sniproxy.conf")
           ## #{@service.get_server_iface.host.name} #{@service.get_server_iface.address.first_ipv4}
           #inet_protocols = all
           #myhostname = #{iface.host.name}

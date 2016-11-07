@@ -1,0 +1,35 @@
+# sniproxy example configuration file
+# lines that start with # are comments
+# lines with only white space are ignored
+
+user daemon
+
+# PID file
+pidfile /var/run/sniproxy.pid
+
+error_log {
+    # Log to the daemon syslog facility
+    #syslog daemon
+
+    # Alternatively we could log to file
+    filename /dev/stdout
+
+    # Control the verbosity of the log
+    #priority notice
+}
+
+listen 443 {
+    proto tls
+    table https_hosts
+
+    access_log {
+        filename /dev/stdout
+        priority notice
+    }
+}
+
+# named tables are defined with the table directive
+table https_hosts {
+  #posco.<%= host.region.network.domain %> <%= "[#{}]:#{}" %>
+}
+
