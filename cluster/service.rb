@@ -10,10 +10,16 @@
 }
 =end
 def make_service(region, parameter)
+    docker = Construqt::Hosts::Docker.new
+                                    .image(parameter['image'])
+                                    .pkt_man(parameter['pkt_man']||:apt)
+                                    .privileged
+    (parameter['maps']||[]).each do |map|
+      docker.map(map.first, map.last)
+    end
     return region.hosts.add(parameter['name'], "flavour" => "nixian", "dialect" => "ubuntu",
                             "mother" => parameter['mother'],
-                            "docker_deploy" => Construqt::Hosts::Docker.new
-      .image(parameter['image']).pkt_man(parameter['pkt_man']||:apt)) do |host|
+                            "docker_deploy" => docker) do |host|
       region.interfaces.add_device(host, "lo", "mtu" => "9000",
                                    :description=>"#{host.name} lo",
                                    "address" => region.network.addresses.add_ip(Construqt::Addresses::LOOOPBACK))

@@ -232,6 +232,7 @@ etcbinds = get_config_and_pullUp("etcbinds").map do |j|
                'pkt_man'   => :apk,
                'firewalls' => ['etcd-srv'],
                'ifname'    => 'eth0',
+               'maps'      => [["/var/lib/etcd/data/etcd-#{j.name}", "/var/lib/etcd/data"]],
                'rndc_key'  => 'total geheim',
                'domains'   => [{ 'name' => 'construqt.n:et', 'basefile' => 'costruqt.net.zone' }],
                'ipv6_addr' => "#{ipv6.to_string}##{j.name}-ETCD_MAPPED##{j.name}_ETCD_S#ETCD_S",
@@ -316,7 +317,9 @@ vips = get_config_and_pullUp("vips").map do |j|
                'ipv6_gw'   => j.ipv6_intern.to_string)
 
 end
-region.hosts.add(get_config()["cerberus"], "flavour" => "nixian", "dialect" => "ubuntu") do |host|
+region.hosts.add(get_config()["cerberus"], "flavour" => "nixian", "dialect" => "ubuntu",
+                "vagrant_deploy" => Construqt::Hosts::Vagrant.new.box("ubuntu/xenial64")
+                    .add_cfg('config.vm.network "public_network", bridge: "bridge0"')) do |host|
       region.interfaces.add_device(host, "lo", "mtu" => "9000",
                                    :description=>"#{host.name} lo",
                                    "address" => region.network.addresses.add_ip(Construqt::Addresses::LOOOPBACK))

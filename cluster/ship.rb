@@ -14,6 +14,8 @@ def make_ship(region, parameter)
     #binding.pry if 'coreos' == parameter['dialect']
     return region.hosts.add(parameter['name'], "flavour" => "nixian",
                             "dialect" => parameter['dialect']||"ubuntu",
+                            "update_channel" => "stable",
+                            "image_version" => "current",
                             "packager" => true,
                            "vagrant_deploy" =>
               Construqt::Hosts::Vagrant.new.box("ubuntu/xenial64")
