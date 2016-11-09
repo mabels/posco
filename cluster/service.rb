@@ -47,7 +47,7 @@ def make_service(region, parameter)
 
         my.interfaces << iface = region.interfaces.add_device(host, "eth0", p)
         #region.cables.add(iface, region.interfaces.find(parameter['mother'], parameter['mother_if']))
-        iface.services.push(region.services.find(parameter['service']).server_iface(iface))
+        iface.services.push(region.services.find(parameter['service']).create.domains(parameter['domains']).server_iface(iface))
       end
     end
 end

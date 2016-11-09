@@ -15,7 +15,17 @@ error_log {
     filename /dev/stdout
 
     # Control the verbosity of the log
-    #priority notice
+    priority debug
+}
+
+resolver {
+<% host.region.dns_resolver.nameservers.ips.each do |i| -%>
+    nameserver <%= i.to_s %>
+<% end %>
+<% iface.services.find{|i| i.kind_of?(SniProxy::Service)}.get_domains.each do |i| -%>
+    search <%= i %>
+<%- end -%>
+    mode ipv6_first
 }
 
 listen 443 {
@@ -23,13 +33,18 @@ listen 443 {
     table https_hosts
 
     access_log {
-        filename /dev/stdout
-        priority notice
+        filename /var/log/sniproxy_access.log
+        priority debug
     }
 }
 
 # named tables are defined with the table directive
 table https_hosts {
+
+<% iface.services.find{|i| i.kind_of?(SniProxy::Service)}.get_domains.each do |i| -%>
+    .*\.<%= i.split('.').join('\\.')%>$ *
+<%- end -%>
+
   #posco.<%= host.region.network.domain %> <%= "[#{}]:#{}" %>
 }
 

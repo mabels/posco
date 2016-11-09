@@ -5,6 +5,7 @@ module Etcd
     attr_reader :name
     attr_accessor :services
     chainable_attr_value :server_iface, nil
+    chainable_attr_value :domains, nil
     def initialize(name)
       @name = name
     end
@@ -15,6 +16,9 @@ module Etcd
       return unless host.docker_deploy
       puts "ETCD>>>>>>>>>#{host.name}"
       host.docker_deploy.app_start_script("exec /bin/sh /etc/etcd/start.sh")
+    end
+    def create
+      self.clone
     end
   end
 

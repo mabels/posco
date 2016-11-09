@@ -137,7 +137,7 @@ def cluster_json
     "path":"../../certs/"
   },
   "cerberus": "cetcd",
-  "domain":"adviser.com",
+  "domains":["adviser.com","protonet.io"],
   "email":"meno.abels@adviser.com"
 }
 JSON
@@ -153,13 +153,13 @@ def get_config
 end
 
 network = Construqt::Networks.add('protonet')
-network.set_domain(get_config['domain'])
+network.set_domain(get_config['domains'].first)
 network.set_contact(get_config['email'])
 network.set_dns_resolver(network.addresses.set_name('NAMESERVER')
   .add_ip('8.8.8.8')
   .add_ip('8.8.4.4')
   .add_ip('2001:4860:4860::8888')
-  .add_ip('2001:4860:4860::8844'), [network.domain])
+  .add_ip('2001:4860:4860::8844'), get_config['domains'])
 region = setup_region('protonet', network)
 
 firewall(region)
@@ -217,7 +217,7 @@ etcbinds = get_config_and_pullUp("etcbinds").map do |j|
                'firewalls' => ['dns-srv'],
                'ifname'    => 'eth0',
                'rndc_key'  => 'total geheim',
-               'domains'   => [{ 'name' => 'construqt.net', 'basefile' => 'costruqt.net.zone' }],
+               'domains'   => get_config['domains'],
                'ipv4_addr' => "#{ipv4.to_string.to_s}##{j.name}-DNS_MAPPED",
                'ipv4_gw'   => j.ipv4_intern.to_s,
                'ipv6_addr' => "#{ipv6.to_string}##{j.name}-DNS_MAPPED##{j.name}_DNS_S#DNS_S",
@@ -234,7 +234,7 @@ etcbinds = get_config_and_pullUp("etcbinds").map do |j|
                'ifname'    => 'eth0',
                'maps'      => [["/var/lib/etcd/data/etcd-#{j.name}", "/var/lib/etcd/data"]],
                'rndc_key'  => 'total geheim',
-               'domains'   => [{ 'name' => 'construqt.n:et', 'basefile' => 'costruqt.net.zone' }],
+               'domains'   => get_config['domains'],
                'ipv6_addr' => "#{ipv6.to_string}##{j.name}-ETCD_MAPPED##{j.name}_ETCD_S#ETCD_S",
                'ipv6_gw'   => j.ipv6_intern.to_s)
   ipv4 = ipv4.inc
@@ -247,7 +247,7 @@ etcbinds = get_config_and_pullUp("etcbinds").map do |j|
                'firewalls' => ["#{j.name}-map-https-8443"],
                'ifname'    => 'eth0',
                'rndc_key'  => 'total geheim',
-               'domains'   => [{ 'name' => 'construqt.net', 'basefile' => 'costruqt.net.zone' }],
+               'domains'   => get_config['domains'],
                'ipv4_addr' => "#{ipv4.to_string.to_s}##{j.name}-CERTOR_MAPPED#CERTOR_S",
                'ipv4_gw'   => "169.254.#{base}.1",
                'ipv6_addr' => "#{ipv6.to_string}##{j.name}-CERTOR_MAPPED##{j.name}_CERTOR_S#CERTOR_S",
@@ -275,11 +275,11 @@ vips = get_config_and_pullUp("vips").map do |j|
                'mother'    => ship,
                'mother_if' => 'br169',
                'name'      => "sniproxy-#{j.name}",
-               'image'     => 'fastandfearless/sinproxy:ubuntu-16-04-b2f0b34',
+               'image'     => 'fastandfearless/sniproxy:ubuntu-16-04-b2f0b34',
                'firewalls' => ['https-srv'],
                'ifname'    => 'eth0',
                'rndc_key'  => 'total geheim',
-               'domains'   => [{ 'name' => 'construqt.net', 'basefile' => 'costruqt.net.zone' }],
+               'domains'   => get_config['domains'],
                'ipv6_addr' => "#{ipv6.to_string}#SNIPROXY_S##{j.name}-SNI_MAPPED##{j.name}_SNI_S",
                'ipv6_gw'   => j.ipv6_intern.to_string)
   ipv4 = ipv4.inc
@@ -292,7 +292,7 @@ vips = get_config_and_pullUp("vips").map do |j|
                'firewalls' => ['https-srv'],
                'ifname'    => 'eth0',
                'rndc_key'  => 'total geheim',
-               'domains'   => [{ 'name' => 'construqt.net', 'basefile' => 'costruqt.net.zone' }],
+               'domains'   => get_config['domains'],
                'ipv6_addr' => "#{ipv6.to_string}#POSCO_S##{j.name}-posco##{j.name}-POSCO_MAPPED##{j.name}_POSCO_S",
                'ipv6_gw'   => j.ipv6_intern.to_string)
   ipv4 = ipv4.inc
@@ -305,11 +305,11 @@ vips = get_config_and_pullUp("vips").map do |j|
                'mother'    => ship,
                'mother_if' => 'br169',
                'name'      => "tunators-#{j.name}",
-               'image'     => 'fastandfearless/sinproxy:ubuntu-16-04-b2f0b34',
+               'image'     => 'fastandfearless/tunator:ubuntu-16-04-c79bd0b',
                'firewalls' => ["#{j.name}-tunator"],
                'ifname'    => 'eth0',
                'rndc_key'  => 'total geheim',
-               'domains'   => [{ 'name' => 'construqt.net', 'basefile' => 'costruqt.net.zone' }],
+               'domains'   => get_config['domains'],
                'ipv6_proxy_neigh' => "##{j.name}_TUNATOR_S_NET",
                'ipv4_addr' => "#{ipv4.to_string}",
                'ipv4_gw'   => j.ipv4_intern.to_string,

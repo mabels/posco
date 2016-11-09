@@ -1,4 +1,20 @@
 module Certor
+
+  class Service
+    include Construqt::Util::Chainable
+    attr_reader :name
+    attr_accessor :services
+    chainable_attr_value :server_iface, nil
+    chainable_attr_value :domains, nil
+
+    def initialize(name)
+      @name = name
+    end
+    def create
+      self.clone
+    end
+  end
+
   module Renderer
     module Nixian
       class Ubuntu
@@ -17,16 +33,6 @@ module Certor
           #MAINCF
         end
       end
-    end
-  end
-
-  class Service
-    include Construqt::Util::Chainable
-    attr_reader :name
-    attr_accessor :services
-    chainable_attr_value :server_iface, nil
-    def initialize(name)
-      @name = name
     end
   end
 end

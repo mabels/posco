@@ -4,8 +4,12 @@ module Posco
     attr_reader :name
     attr_accessor :services
     chainable_attr_value :server_iface, nil
+    chainable_attr_value :domains, nil
     def initialize(name)
       @name = name
+    end
+    def create
+      self.clone
     end
   end
 
