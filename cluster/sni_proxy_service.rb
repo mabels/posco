@@ -31,7 +31,6 @@ module SniProxy
         def interfaces(host, ifname, iface, writer, family = nil)
           return unless iface.address
           puts "#{@service.name} #{host.name} #{ifname}"
-	  binding.pry
           host.result.add(SniProxy::Service,
               Construqt::Util.render(binding, "sniproxy.conf.erb"),
               Construqt::Resources::Rights.root_0644(Construqt::Resources::Component::UNREF),
