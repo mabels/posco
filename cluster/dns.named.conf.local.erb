@@ -1,0 +1,5 @@
+zone "<%= zone.name %>" {
+	type master;
+	file "/var/lib/bind/<%= zone.name %>.zone";
+	allow-query { any; };
+};

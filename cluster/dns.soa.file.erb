@@ -1,0 +1,8 @@
+$TTL 86400	; 1 day
+<%= zone.name %>.		IN SOA	<%= host.name%>.<%= zone.name %> construqt.<%= zone.name %> (
+				156        ; serial
+				3600       ; refresh (1 hour)
+				900        ; retry (15 minutes)
+				604800     ; expire (1 week)
+				86400      ; minimum (1 day)
+				)

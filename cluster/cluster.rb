@@ -54,7 +54,6 @@ KEY
    'sni_proxy_service.rb',
    'tunator_service.rb'].each { |f| require_relative f }
 
-  region.services.add(Dns::Service.new('DNS'))
   region.services.add(Etcd::Service.new('ETCD'))
   region.services.add(Certor::Service.new('CERTOR'))
   region.services.add(SniProxy::Service.new('SNIPROXY'))
@@ -152,15 +151,98 @@ def get_config
   end)
 end
 
+class NameServerSets
+  class NameServerSet
+    attr_reader :zones
+    def self.load(fname)
+      js = JSON.parse(IO.read(fname))
+      dz = DnsZones.load(fname[0..-(".json".length + 1)])
+      NameServerSet.new(fname, js, dz)
+    end
+    def servers(&block)
+      @cfg.each(&block)
+    end
+    def initialize(fname, cfg, dz)
+      @cfg = cfg
+      @fname = fname
+      @zones = dz
+    end
+    def name
+      File.basename(@fname)
+    end
+  end
+  def self.load(cfg)
+    throw "config parameter dns path not set" unless cfg["path"]
+    ret = NameServerSets.new
+    Dir.glob(File.join(cfg["path"],"*.json")).each do|fname|
+      next unless File.file?(fname)
+      ret.add(NameServerSet.load(fname))
+    end   
+    ret   
+  end
+  def initialize
+    @sets = {}
+  end
+  def each(&block)
+    @sets.values.each(&block)
+  end
+  def add(nss)
+    @sets[nss.name] = nss
+  end
+  def names
+    @sets.values.map {|i|i.zones.names}.flatten
+  end
+  class DnsZones
+    class DnsZone
+      attr_reader :name, :fname, :content
+      def initialize(zname, fname, content)
+        @name = zname
+        @fname = fname
+        @content = content
+      end
+      def self.load(fname)
+        zname = File.basename(fname)[0..-(".static.zone".length + 1)]
+        content = IO.read(fname)
+        ret = DnsZone.new(zname, fname, content)
+      end
+    end
+    def initialize
+      @zones = {}
+    end
+    def names
+      @zones.keys
+    end
+    def each(&block)
+      @zones.values.each(&block)
+    end
+    def add(zone)
+      @zones[zone.name] = zone
+    end
+    def self.load(path)
+      ret = DnsZones.new
+      Dir.glob(File.join(path,"*.static.zone")).each do|dname|
+        next unless File.file?(dname)
+        Construqt.logger.info "Reading Static Zone for #{File.basename(dname)}"
+        ret.add(DnsZone.load(dname))
+      end
+      ret
+    end
+  end
+end
+
+nss = NameServerSets.load(get_config['dns'])
+
 network = Construqt::Networks.add('protonet')
-network.set_domain(get_config['domains'].first)
+network.set_domain(get_config['domain'])
 network.set_contact(get_config['email'])
 network.set_dns_resolver(network.addresses.set_name('NAMESERVER')
   .add_ip('8.8.8.8')
   .add_ip('8.8.4.4')
   .add_ip('2001:4860:4860::8888')
-  .add_ip('2001:4860:4860::8844'), get_config['domains'])
+  .add_ip('2001:4860:4860::8844'),[get_config['domain']])
 region = setup_region('protonet', network)
+region.services.add(Dns::Service.new('DNS', nss))
+
 
 firewall(region)
 
@@ -214,10 +296,12 @@ etcbinds = get_config_and_pullUp("etcbinds").map do |j|
                'mother'    => ship,
                'mother_if' => 'br169',
                'name'      => "dns-#{j.name}",
+               'image'     => 'ubuntu:xenial',
+               'packages'  => ['bind9'],
                'firewalls' => ['dns-srv'],
                'ifname'    => 'eth0',
                'rndc_key'  => 'total geheim',
-               'domains'   => get_config['domains'],
+               'domains'   => nss.names,
                'ipv4_addr' => "#{ipv4.to_string.to_s}##{j.name}-DNS_MAPPED",
                'ipv4_gw'   => j.ipv4_intern.to_s,
                'ipv6_addr' => "#{ipv6.to_string}##{j.name}-DNS_MAPPED##{j.name}_DNS_S#DNS_S",
@@ -234,7 +318,7 @@ etcbinds = get_config_and_pullUp("etcbinds").map do |j|
                'ifname'    => 'eth0',
                'maps'      => [["/var/lib/etcd/data/etcd-#{j.name}", "/var/lib/etcd/data"]],
                'rndc_key'  => 'total geheim',
-               'domains'   => get_config['domains'],
+               'domains'   => nss.names,
                'ipv6_addr' => "#{ipv6.to_string}##{j.name}-ETCD_MAPPED##{j.name}_ETCD_S#ETCD_S",
                'ipv6_gw'   => j.ipv6_intern.to_s)
   ipv4 = ipv4.inc
@@ -247,7 +331,7 @@ etcbinds = get_config_and_pullUp("etcbinds").map do |j|
                'firewalls' => ["#{j.name}-map-https-8443"],
                'ifname'    => 'eth0',
                'rndc_key'  => 'total geheim',
-               'domains'   => get_config['domains'],
+               'domains'   => nss.names,
                'ipv4_addr' => "#{ipv4.to_string.to_s}##{j.name}-CERTOR_MAPPED#CERTOR_S",
                'ipv4_gw'   => "169.254.#{base}.1",
                'ipv6_addr' => "#{ipv6.to_string}##{j.name}-CERTOR_MAPPED##{j.name}_CERTOR_S#CERTOR_S",
@@ -279,7 +363,7 @@ vips = get_config_and_pullUp("vips").map do |j|
                'firewalls' => ['https-srv'],
                'ifname'    => 'eth0',
                'rndc_key'  => 'total geheim',
-               'domains'   => get_config['domains'],
+               'domains'   => nss.names,
                'ipv6_addr' => "#{ipv6.to_string}#SNIPROXY_S##{j.name}-SNI_MAPPED##{j.name}_SNI_S",
                'ipv6_gw'   => j.ipv6_intern.to_string)
   ipv4 = ipv4.inc
@@ -292,7 +376,7 @@ vips = get_config_and_pullUp("vips").map do |j|
                'firewalls' => ['https-srv'],
                'ifname'    => 'eth0',
                'rndc_key'  => 'total geheim',
-               'domains'   => get_config['domains'],
+               'domains'   => nss.names,
                'ipv6_addr' => "#{ipv6.to_string}#POSCO_S##{j.name}-posco##{j.name}-POSCO_MAPPED##{j.name}_POSCO_S",
                'ipv6_gw'   => j.ipv6_intern.to_string)
   ipv4 = ipv4.inc
@@ -309,7 +393,7 @@ vips = get_config_and_pullUp("vips").map do |j|
                'firewalls' => ["#{j.name}-tunator"],
                'ifname'    => 'eth0',
                'rndc_key'  => 'total geheim',
-               'domains'   => get_config['domains'],
+               'domains'   => nss.names,
                'ipv6_proxy_neigh' => "##{j.name}_TUNATOR_S_NET",
                'ipv4_addr' => "#{ipv4.to_string}",
                'ipv4_gw'   => j.ipv4_intern.to_string,

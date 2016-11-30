@@ -17,6 +17,10 @@ def make_service(region, parameter)
     (parameter['maps']||[]).each do |map|
       docker.map(map.first, map.last)
     end
+    (parameter['packages']||[]).each do |pkg|
+      docker.package(pkg)
+    end
+
     return region.hosts.add(parameter['name'], "flavour" => "nixian", "dialect" => "ubuntu",
                             "mother" => parameter['mother'],
                             "docker_deploy" => docker) do |host|
