@@ -45,7 +45,7 @@ module Dns
               OpenStruct.new(:right => "0644", :owner => "bind", :component => Construqt::Resources::Component::UNREF),
               "/var/lib/bind/", "#{zone.name}.#{i}")
             end
-            result.add(Dns::Service, "; rumpf zone file\n" + zone.content,
+            result.add(Dns::Service, "; static zone file for #{zone.name}\n" + zone.content,
               OpenStruct.new(:right => "0644", :owner => "bind", :component => Construqt::Resources::Component::UNREF),
               "/var/lib/bind/", "#{zone.name}.skel")
         end

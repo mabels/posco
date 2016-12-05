@@ -1,10 +1,10 @@
 <% ns.servers do |name, ips| -%>
-<%= zone.name %>.	NS	<%= name %>.
+<%= zone.name %>.		NS	<%= name %>.
 <%   if zone.name == name.split(".")[1..-1].join(".") 
        ips.each do |ip|
          ip = IPAddress.parse(ip)
 -%>
-<%= name %>.    <%= ip.ipv4? ? "A" : "AAAA" %> <%= ip.to_s %>
+<%= name %>.	<%= ip.ipv4? ? "A" : "AAAA" %>	<%= ip.to_s %>
 <%     end 
      end
    end 
