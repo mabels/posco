@@ -14,13 +14,13 @@ def make_ship(region, parameter)
     #binding.pry if 'coreos' == parameter['dialect']
     return region.hosts.add(parameter['name'], "flavour" => "nixian",
                             "dialect" => parameter['dialect']||"ubuntu",
-                            "update_channel" => "stable",
+                            "update_channel" => "beta",
                             "image_version" => "current",
                             "packager" => true,
-                           "vagrant_deploy" =>
-              Construqt::Hosts::Vagrant.new.box("ubuntu/xenial64")
+                           "services" => (parameter['services']||[]) + [
+        Construqt::Flavour::Nixian::Services::Vagrant::Service.new.box("ubuntu/xenial64")
                .add_cfg('config.vm.network "public_network", bridge: "bridge0"')
-     ) do |host|
+     ]) do |host|
       region.interfaces.add_device(host, "lo", "mtu" => "9000",
                                    :description=>"#{host.name} lo",
                                    "address" => region.network.addresses.add_ip(Construqt::Addresses::LOOOPBACK))

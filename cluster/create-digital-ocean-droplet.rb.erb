@@ -1,0 +1,18 @@
+#!/usr/bin/env ruby
+#
+require 'json'
+system <<DOCTL
+doctl compute droplet create <%= host.name %> --wait \
+  --size <%=  @service.get_size %> \
+  --image <%=  @service.get_image %> \
+  --region <%=  @service.get_region %> \
+  <%=  @service.get_ssh_keys.map { |sk| "--ssh-keys #{ sk }" }.join(" ") %> \
+  <%=  @service.get_enable_ipv6 ? "--enable-ipv6" : "" %>
+DOCTL
+
+droplet=JSON.parse(`doctl compute droplet list -o json <%= host.name %>`).find{|i| i['name']=="<%= host.name %>"}
+
+File.open(File.join(File.dirname(__FILE__), "droplet.json"), 'w') {|f| f.write(droplet.to_json) }
+
+system("doctl compute droplet delete --force #{droplet['id']}")
+

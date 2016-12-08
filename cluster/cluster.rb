@@ -13,6 +13,12 @@ CONSTRUQT_PATH = ENV['CONSTRUQT_PATH'] || '../../../'
   "#{CONSTRUQT_PATH}/construqt/flavours/nixian/core/lib",
   "#{CONSTRUQT_PATH}/construqt/flavours/nixian/dialects/ubuntu/lib",
   "#{CONSTRUQT_PATH}/construqt/flavours/nixian/dialects/coreos/lib",
+  "#{CONSTRUQT_PATH}/construqt/flavours/nixian/services/lib",
+  "#{CONSTRUQT_PATH}/construqt/flavours/nixian/tastes/entities/lib",
+  "#{CONSTRUQT_PATH}/construqt/flavours/nixian/tastes/systemd/lib",
+  "#{CONSTRUQT_PATH}/construqt/flavours/nixian/tastes/flat/lib",
+  "#{CONSTRUQT_PATH}/construqt/flavours/nixian/tastes/debian/lib",
+  "#{CONSTRUQT_PATH}/construqt/flavours/nixian/tastes/file/lib",
   "#{CONSTRUQT_PATH}/construqt/flavours/mikrotik/lib",
   "#{CONSTRUQT_PATH}/construqt/flavours/ciscian/core/lib",
   "#{CONSTRUQT_PATH}/construqt/flavours/ciscian/dialects/hp/lib",
@@ -28,9 +34,29 @@ require_relative 'ship.rb'
 require_relative 'service.rb'
 require_relative 'firewall.rb'
 
+[
+ 'digital_ocean.rb',
+ 'dns_service.rb',
+ 'etcd_service.rb',
+ 'certor_service.rb',
+ 'posco_service.rb',
+ 'sni_proxy_service.rb',
+ 'tunator_service.rb'
+].each do |f|
+  require_relative f
+end
+
+
 def setup_region(name, network)
   region = Construqt::Regions.add(name, network)
   nixian = Construqt::Flavour::Nixian::Factory.new
+  nixian.services_factory.add(DigitalOcean::Factory.new)
+  nixian.services_factory.add(Dns::Factory.new)
+  nixian.services_factory.add(Etcd::Factory.new)
+  nixian.services_factory.add(Certor::Factory.new)
+  nixian.services_factory.add(SniProxy::Factory.new)
+  nixian.services_factory.add(Posco::Factory.new)
+  nixian.services_factory.add(Tunator::Factory.new)
   nixian.add_dialect(Construqt::Flavour::Nixian::Dialect::Ubuntu::Factory.new)
   nixian.add_dialect(Construqt::Flavour::Nixian::Dialect::CoreOs::Factory.new)
   region.flavour_factory.add(nixian)
@@ -47,19 +73,6 @@ KEY
     ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDtG5uO8WF72Wh6uLAsFOgae7lgFn4R/z7nODuw+1QvAKdTZ44YTKkSPlwa2nvzxrB8Mefv08lbDUvad2o93GvXzM7N1XHxumVshFrNsse0Qe+fPrUs/17Yeqt6oZVDvQlo6iEnph6fg3L10Qi3xmKvHNqPqMV7vKrMnYd0Q/NzqVkSdX5SOBrVKui18JRbCrxz5Ld9Jk2SsaR/kEBOdM/QlT6PHCxlVGd0JSdMb6DtvehPH+DdUHI4jdydH6Pq/gHU9SeMdy0J/ZJJuCLit392AnZm50lB366LSEcm423Kb3W5JdClyg8Q/+Kw2HXoQHwS4qX1SxW8UtOmwo2iVwA9E4a2L7ymAu7c7yHKozZg+mKnkO+XUgcLod9GKylVFtsOmu9kHBDIi3M73byMEiCs+2CXRkWUH+yrnKCAT3HzO870mVHel7JRqyxR1WfeMXq8rRXq2NcgZ7/igi9Rt/OJEcxtwIP+QE8TQSNr3mfikXaKWJMneZ4FykZsiRPHKtoGwfrhv+ooTb6pQbr4zPGTDfGxIo37NnIDiI0wShjCsXPuLd49F6xEAT9LdhNAjpYS1PWEvSfy6w7JldSJ7xxE2GSGN/VfXNh0h6Fbut0aVcpllKGJA1IB007rdEHW3hH7G3nW7HZfWCl0FNsGhqi+2P2GxxOYxSy9Zl3wFLBytQ== martin@cerberusssh
 KEY
 
-  ['dns_service.rb',
-   'etcd_service.rb',
-   'certor_service.rb',
-   'posco_service.rb',
-   'sni_proxy_service.rb',
-   'tunator_service.rb'].each { |f| require_relative f }
-
-  region.services.add(Etcd::Service.new('ETCD'))
-  region.services.add(Certor::Service.new('CERTOR'))
-  region.services.add(SniProxy::Service.new('SNIPROXY'))
-  region.services.add(Posco::Service.new('POSCO'))
-  region.services.add(Tunator::Service.new('TUNATOR'))
-
   region
 end
 
@@ -69,6 +82,15 @@ def cluster_json
     "etcbinds":[
     {
     "name":"1",
+    "services": {
+      "DigitalOcean::Service": {
+        "size" : "512mb",
+        "image" : "coreos-beta",
+        "region" : "fra1",
+        "ssh_keys" : [ "af:bd:ed:74:85:81:67:5d:39:7e:e6:50:2b:3e:3a:ff" ],
+        "enable_ipv6" : true
+      }
+    },
     "dialect": "coreos",
     "ifname": "eth1",
     "ipv4_extern":"10.24.1.200/24",
@@ -135,8 +157,11 @@ def cluster_json
   "certs":{
     "path":"../../certs/"
   },
+  "dns" : {
+    "path":"../../dns/"
+  },
   "cerberus": "cetcd",
-  "domains":["adviser.com","protonet.io"],
+  "domain":"adviser.com",
   "email":"meno.abels@adviser.com"
 }
 JSON
@@ -151,84 +176,6 @@ def get_config
   end)
 end
 
-class NameServerSets
-  class NameServerSet
-    attr_reader :zones
-    def self.load(fname)
-      js = JSON.parse(IO.read(fname))
-      dz = DnsZones.load(fname[0..-(".json".length + 1)])
-      NameServerSet.new(fname, js, dz)
-    end
-    def servers(&block)
-      @cfg.each(&block)
-    end
-    def initialize(fname, cfg, dz)
-      @cfg = cfg
-      @fname = fname
-      @zones = dz
-    end
-    def name
-      File.basename(@fname)
-    end
-  end
-  def self.load(cfg)
-    throw "config parameter dns path not set" unless cfg["path"]
-    ret = NameServerSets.new
-    Dir.glob(File.join(cfg["path"],"*.json")).each do|fname|
-      next unless File.file?(fname)
-      ret.add(NameServerSet.load(fname))
-    end   
-    ret   
-  end
-  def initialize
-    @sets = {}
-  end
-  def each(&block)
-    @sets.values.each(&block)
-  end
-  def add(nss)
-    @sets[nss.name] = nss
-  end
-  def names
-    @sets.values.map {|i|i.zones.names}.flatten
-  end
-  class DnsZones
-    class DnsZone
-      attr_reader :name, :fname, :content
-      def initialize(zname, fname, content)
-        @name = zname
-        @fname = fname
-        @content = content
-      end
-      def self.load(fname)
-        zname = File.basename(fname)[0..-(".static.zone".length + 1)]
-        content = IO.read(fname)
-        ret = DnsZone.new(zname, fname, content)
-      end
-    end
-    def initialize
-      @zones = {}
-    end
-    def names
-      @zones.keys
-    end
-    def each(&block)
-      @zones.values.each(&block)
-    end
-    def add(zone)
-      @zones[zone.name] = zone
-    end
-    def self.load(path)
-      ret = DnsZones.new
-      Dir.glob(File.join(path,"*.static.zone")).each do|dname|
-        next unless File.file?(dname)
-        Construqt.logger.info "Reading Static Zone for #{File.basename(dname)}"
-        ret.add(DnsZone.load(dname))
-      end
-      ret
-    end
-  end
-end
 
 nss = NameServerSets.load(get_config['dns'])
 
@@ -241,15 +188,24 @@ network.set_dns_resolver(network.addresses.set_name('NAMESERVER')
   .add_ip('2001:4860:4860::8888')
   .add_ip('2001:4860:4860::8844'),[get_config['domain']])
 region = setup_region('protonet', network)
-region.services.add(Dns::Service.new('DNS', nss))
+#region.services.add(Dns::Service.new('DNS', nss))
 
 
 firewall(region)
 
 base = 200
 
+def services_parse(srvs)
+  (srvs||[]).map do |key, srv|
+    if key == "DigitalOcean::Service"
+      DigitalOcean::Service.from(srv)
+    end
+  end
+end
+
 def pullUp(p)
   OpenStruct.new(p.merge(
+    'services' => services_parse(p['services']),
     'ipv4_addr' => IPAddress.parse(p['ipv4_addr']),
     'ipv4_gw' => IPAddress.parse(p['ipv4_gw']),
     'ipv6_addr' => IPAddress.parse(p['ipv6_addr']),
@@ -278,8 +234,11 @@ end
 load_certs(network)
 
 etcbinds = get_config_and_pullUp("etcbinds").map do |j|
+  #binding.pry
   mother_firewall(j.name)
-  ship = make_ship(region, 'name' => "etcbind-#{j.name}",
+  ship = make_ship(region,
+                   'services' => j.services,
+                   'name' => "etcbind-#{j.name}",
                    'firewalls' => ["#{j.name}-ipv4-map-dns", "#{j.name}-ipv4-map-certor","#{j.name}-ipv6-etcd"],
                    'ifname'    => j.ifname||'enp0s8',
                    'dialect'   => j.dialect,
@@ -292,7 +251,7 @@ etcbinds = get_config_and_pullUp("etcbinds").map do |j|
                    'ipv6_intern' => "#{j.ipv6_intern.to_string}##{j.name}_GW_S#GW_S")
   ipv4 = j.ipv4_intern.inc
   ipv6 = j.ipv6_intern.inc
-  make_service(region, 'service' => 'DNS',
+  make_service(region, 'service' => Dns::Service.new(get_config['dns']),
                'mother'    => ship,
                'mother_if' => 'br169',
                'name'      => "dns-#{j.name}",
@@ -308,7 +267,7 @@ etcbinds = get_config_and_pullUp("etcbinds").map do |j|
                'ipv6_gw'   => j.ipv6_intern.to_s)
   ipv4 = ipv4.inc
   ipv6 = ipv6.inc
-  make_service(region, 'service' => 'ETCD',
+  make_service(region, 'service' => Etcd::Service.new,
                'mother'    => ship,
                'mother_if' => 'br169',
                'name'      => "etcd-#{j.name}",
@@ -323,7 +282,7 @@ etcbinds = get_config_and_pullUp("etcbinds").map do |j|
                'ipv6_gw'   => j.ipv6_intern.to_s)
   ipv4 = ipv4.inc
   ipv6 = ipv6.inc
-  make_service(region, 'service' => 'CERTOR',
+  make_service(region, 'service' => Certor::Service.new,
                'mother'    => ship,
                'mother_if' => 'br169',
                'name'      => "certor-#{j.name}",
@@ -355,7 +314,7 @@ vips = get_config_and_pullUp("vips").map do |j|
                    'ipv6_intern' => j.ipv6_intern.to_string)
   ipv4 = j.ipv4_intern.inc
   ipv6 = j.ipv6_intern.inc
-  make_service(region, 'service' => 'SNIPROXY',
+  make_service(region, 'service' => SniProxy::Service.new,
                'mother'    => ship,
                'mother_if' => 'br169',
                'name'      => "sniproxy-#{j.name}",
@@ -368,7 +327,7 @@ vips = get_config_and_pullUp("vips").map do |j|
                'ipv6_gw'   => j.ipv6_intern.to_string)
   ipv4 = ipv4.inc
   ipv6 = ipv6.inc
-  make_service(region, 'service' => 'POSCO',
+  make_service(region, 'service' => Posco::Service.new,
                'mother'    => ship,
                'mother_if' => 'br169',
                'image'     => 'fastandfearless/node:ubuntu-16-04-b2f0b34',
@@ -385,7 +344,7 @@ vips = get_config_and_pullUp("vips").map do |j|
   tunator_block_ofs = j.ipv6_intern.size().shr(1)
   tunator_block = j.ipv6_intern.network.add_num(tunator_block_ofs).change_prefix(119)
   region.network.addresses.add_ip("#{tunator_block.to_string}##{j.name}_TUNATOR_S_NET")
-  make_service(region, 'service' => 'TUNATOR',
+  make_service(region, 'service' => Tunator::Service.new,
                'mother'    => ship,
                'mother_if' => 'br169',
                'name'      => "tunators-#{j.name}",
@@ -402,8 +361,8 @@ vips = get_config_and_pullUp("vips").map do |j|
 
 end
 region.hosts.add(get_config()["cerberus"], "flavour" => "nixian", "dialect" => "ubuntu",
-                "vagrant_deploy" => Construqt::Hosts::Vagrant.new.box("ubuntu/xenial64")
-                    .add_cfg('config.vm.network "public_network", bridge: "bridge0"')) do |host|
+                "services" => [Construqt::Flavour::Nixian::Services::Vagrant::Service.new.box("ubuntu/xenial64")
+                    .add_cfg('config.vm.network "public_network", bridge: "bridge0"')]) do |host|
       region.interfaces.add_device(host, "lo", "mtu" => "9000",
                                    :description=>"#{host.name} lo",
                                    "address" => region.network.addresses.add_ip(Construqt::Addresses::LOOOPBACK))

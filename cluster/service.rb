@@ -10,7 +10,11 @@
 }
 =end
 def make_service(region, parameter)
-    docker = Construqt::Hosts::Docker.new
+
+    updowner = Construqt::Flavour::Nixian::Services::UpDowner::Service.new
+                                    .taste(Construqt::Flavour::Nixian::Tastes::File::Factory.new)
+
+    docker = Construqt::Flavour::Nixian::Services::Docker::Service.new
                                     .image(parameter['image'])
                                     .pkt_man(parameter['pkt_man']||:apt)
                                     .privileged
@@ -23,7 +27,7 @@ def make_service(region, parameter)
 
     return region.hosts.add(parameter['name'], "flavour" => "nixian", "dialect" => "ubuntu",
                             "mother" => parameter['mother'],
-                            "docker_deploy" => docker) do |host|
+                            "services" => [docker, updowner]) do |host|
       region.interfaces.add_device(host, "lo", "mtu" => "9000",
                                    :description=>"#{host.name} lo",
                                    "address" => region.network.addresses.add_ip(Construqt::Addresses::LOOOPBACK))
@@ -51,7 +55,7 @@ def make_service(region, parameter)
 
         my.interfaces << iface = region.interfaces.add_device(host, "eth0", p)
         #region.cables.add(iface, region.interfaces.find(parameter['mother'], parameter['mother_if']))
-        iface.services.push(region.services.find(parameter['service']).create.domains(parameter['domains']).server_iface(iface))
+        iface.services.add(parameter['service'].domains(parameter['domains']).server_iface(iface))
       end
     end
 end

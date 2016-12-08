@@ -22,7 +22,7 @@ resolver {
 <% host.region.dns_resolver.nameservers.ips.each do |i| -%>
     nameserver <%= i.to_s %>
 <% end %>
-<% iface.services.find{|i| i.kind_of?(SniProxy::Service)}.get_domains.each do |i| -%>
+<% @service.get_domains.each do |i| -%>
     search <%= i %>
 <%- end -%>
     mode ipv6_first
@@ -41,7 +41,7 @@ listen 443 {
 # named tables are defined with the table directive
 table https_hosts {
 
-<% iface.services.find{|i| i.kind_of?(SniProxy::Service)}.get_domains.each do |i| -%>
+<% @service.get_domains.each do |i| -%>
     .*\.<%= i.split('.').join('\\.')%>$ *
 <%- end -%>
 
