@@ -14,5 +14,6 @@ droplet=JSON.parse(`doctl compute droplet list -o json <%= host.name %>`).find{|
 
 File.open(File.join(File.dirname(__FILE__), "droplet.json"), 'w') {|f| f.write(droplet.to_json) }
 
-system("doctl compute droplet delete --force #{droplet['id']}")
+system("cd <%= @service.cluster_rb_directory %> && ruby cluster.rb")
 
+system("/bin/sh #{File.join(File.dirname(__FILE__), "remote-deploy.sh")}")

@@ -1,0 +1,7 @@
+#!/usr/bin/env ruby
+#
+require 'json'
+
+droplet=JSON.parse(`doctl compute droplet list -o json <%= host.name %>`).find{|i| i['name']=="<%= host.name %>"}
+
+system("doctl compute droplet delete --force #{droplet['id']}")

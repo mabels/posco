@@ -1,9 +1,7 @@
-options {
-	allow-query { 127.0.0.1; localhost; };
-}
-
+<% zones.each do | zone| %>
 zone "<%= zone.name %>" {
 	type master;
 	file "/var/lib/bind/<%= zone.name %>.zone";
 	allow-query { any; };
 };
+<% end %>

@@ -109,14 +109,22 @@ module Dns
       @nss = NameServerSets.load(fname)
     end
   end
-
+ 
   class Action
-    def initialize(service)
+    attr_reader :host
+    def initialize(service, host)
       @service = service
+      @host = host
     end
 
+    def write_named_conf_options(host, result)
+      result.add(Dns::Service,
+                 Construqt::Util.render(binding, "dns.named.conf.options.erb"),
+                 Construqt::Resources::Rights.root_0644(Construqt::Resources::Component::UNREF),
+                 "/etc/bind", "named.options.local")
+    end
 
-    def write_named_conf_local(host, result, zone)
+    def write_named_conf_local(host, result, zones)
       result.add(Dns::Service,
                  Construqt::Util.render(binding, "dns.named.conf.local.erb"),
                  Construqt::Resources::Rights.root_0644(Construqt::Resources::Component::UNREF),
@@ -139,18 +147,18 @@ module Dns
     def activate(context)
       @context = context
     end
-    def attach_host(host)
-      @host = host
-    end
     def build_config_host
       #return unless iface.address
       result = @context.find_instances_from_type(Construqt::Flavour::Nixian::Services::Result::OncePerHost)
+      zones = []
       @service.nss.each do |ns|
         ns.zones.each do |zone|
-          write_named_conf_local(host, result, zone)
+          zones.push(zone)
           write_zone_file(host, result, ns, zone)
         end
       end
+      write_named_conf_local(host, result, zones)
+      write_named_conf_options(host, result)
     end
 
     def post_interfaces
@@ -195,7 +203,7 @@ module Dns
 
 
     def produce(host, srv_inst, ret)
-      Action.new(srv_inst)
+      Action.new(srv_inst, host)
     end
   end
 end

@@ -174,6 +174,30 @@ def get_config
   else
     cluster_json
   end)
+  ["etcbinds","vips"].each do |i|
+    obj[i].each do |j|
+      hostname = "#{i[0..-2]}-#{j['name']}"
+      droplet_json = File.join("cfgs",hostname,"droplet.json")
+      if File.exists?(droplet_json)
+        droplet = JSON.parse(IO.read(droplet_json))
+        droplet['networks']['v4'].each do |addr|
+          host_ip = IPAddress.parse("#{addr['ip_address']}/#{addr['netmask']}")
+          host_gateway = IPAddress.parse(addr['gateway'])
+          j['ipv4_extern'] = host_ip.to_string
+          j['ipv4_addr'] = host_ip.to_string
+          j['ipv4_gateway'] = host_gateway.to_s
+        end
+        droplet['networks']['v6'].each do |addr|
+          host_ip = IPAddress.parse("#{addr['ip_address']}/#{addr['netmask']}")
+          host_gateway = IPAddress.parse(addr['gateway'])
+          j['ipv6_addr'] = host_ip.to_string
+          j['ipv6_gw'] = host_gateway.to_s
+          j['ipv6_intern'] = "#{host_ip.inc.to_s}/124"
+        end
+      end
+    end
+  end
+  obj
 end
 
 

@@ -13,12 +13,14 @@ module DigitalOcean
     chainable_attr_value :region
     chainable_attr_value :ssh_keys
     chainable_attr_value :enable_ipv6
+    attr_reader :cluster_rb_directory
     def initialize
       @size = "512mb"
       @image = "coreos-beta"
       @region = "fra1"
       @ssh_keys = [""]
       @enable_ipv6 = false
+      @cluster_rb_directory = File.dirname(__FILE__)
     end
     def self.from(p)
       Service.new
@@ -47,6 +49,10 @@ module DigitalOcean
                  Construqt::Util.render(binding, "create-digital-ocean-droplet.rb.erb"),
                  Construqt::Resources::Rights.root_0755,
                  "create-digital-ocean-droplet.rb")
+      result.add(self,
+                 Construqt::Util.render(binding, "remove-digital-ocean-droplet.rb.erb"),
+                 Construqt::Resources::Rights.root_0755,
+                 "remove-digital-ocean-droplet.rb")
     end
   end
 
