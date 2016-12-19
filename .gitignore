@@ -2,3 +2,4 @@ dist/**
 node_modules/**
 typings/**
 cluster/cfgs/**
+cluster/martin.cfg.json
