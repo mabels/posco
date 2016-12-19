@@ -125,7 +125,7 @@ def mother_firewall(name)
     fw.nat do |nat|
       nat.add.prerouting.action(Construqt::Firewalls::Actions::DNAT).
         from_net("#INTERNET")
-        .to_me
+        .to_me.ipv4
         .tcp.dport(443).to_dest("##{name}-SNI_MAPPED").from_is_outside
     end
     fw.forward do |fwd|
@@ -145,7 +145,7 @@ def mother_firewall(name)
   end
   Construqt::Firewalls.add("#{name}-ipv4-map-certor") do |fw|
     fw.nat do |nat|
-      nat.add.prerouting.action(Construqt::Firewalls::Actions::DNAT).ipv6.ipv4
+      nat.add.prerouting.action(Construqt::Firewalls::Actions::DNAT).ipv4
         .from_net("#INTERNET").to_me
         .tcp.dport(443).to_dest("##{name}-CERTOR_MAPPED").from_is_outside
     end
