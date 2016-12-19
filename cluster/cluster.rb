@@ -36,6 +36,7 @@ require_relative 'firewall.rb'
 
 [
  'digital_ocean.rb',
+ 'vultr.rb',
  'dns_service.rb',
  'etcd_service.rb',
  'certor_service.rb',
@@ -51,6 +52,7 @@ def setup_region(name, network)
   region = Construqt::Regions.add(name, network)
   nixian = Construqt::Flavour::Nixian::Factory.new
   nixian.services_factory.add(DigitalOcean::Factory.new)
+  nixian.services_factory.add(Vultr::Factory.new)
   nixian.services_factory.add(Dns::Factory.new)
   nixian.services_factory.add(Etcd::Factory.new)
   nixian.services_factory.add(Certor::Factory.new)
@@ -223,6 +225,9 @@ def services_parse(srvs)
   (srvs||[]).map do |key, srv|
     if key == "DigitalOcean::Service"
       DigitalOcean::Service.from(srv)
+    end
+    if key = "Vultr::Service"
+      Vultr::Service.from(srv)
     end
   end
 end
