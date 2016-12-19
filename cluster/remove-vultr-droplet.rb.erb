@@ -1,0 +1,7 @@
+#!/usr/bin/env ruby
+#
+require 'json'
+
+droplet=%x(vultr servers | grep '<%= host.name %>' | cut -f1)
+
+system("vultr server delete #{droplet} -f")

@@ -1,0 +1,111 @@
+{
+    "etcbinds":[
+    {
+    "name":"eu-0",
+    "dialect":"coreos",  
+    "services": {
+      "Vultr::Service": {
+        "region" : "9",
+        "plan" : "29",
+        "os" : "164",
+        "snapshot" : "c9f585152574f",
+        "enable_ipv6" : true
+      }
+    },
+    "ifname":"eth0",
+    "ipv4_extern":"207.154.200.185/20",
+    "ipv4_addr":"207.154.200.185/20",
+    "ipv4_gw":"207.154.192.1",
+    "ipv6_addr":"2a03:b0c0:3:d0::2320:5000/64",
+    "ipv6_gw":"2a03:b0c0:3:d0::1",
+    "ipv4_intern":"169.254.201.1/24",
+    "ipv6_intern":"2a03:b0c0:3:d0::2320:5001/124"
+  },
+  {
+    "name":"eu-1",
+    "dialect":"coreos",
+    "ifname":"eth0",
+    "services": {
+      "DigitalOcean::Service": {
+        "size" : "512mb",
+        "image" : "coreos-beta",
+        "region" : "ams2",
+        "ssh_keys" : [ "4d:77:38:71:1d:a1:91:66:42:72:79:45:eb:cd:d6:ea" ],
+        "enable_ipv6" : true
+      }
+    },
+    "ipv4_extern":"95.85.21.40/18",
+    "ipv4_addr":"95.85.21.40/18",
+    "ipv4_gw":"95.85.21.1",
+    "ipv6_addr":"2a03:b0c0:0:1010::73f:7000/64",
+    "ipv6_gw":"2a03:b0c0:0:1010::1",
+    "ipv4_intern":"169.254.201.1/24",
+    "ipv6_intern":"2a03:b0c0:0:1010::73f:7001/124"
+  },
+  {
+    "name":"us-0",
+    "ifname":"eth0",
+    "dialect":"coreos",
+    "services": {
+      "DigitalOcean::Service": {
+        "size" : "512mb",
+        "image" : "coreos-beta",
+        "region" : "nyc3",
+        "ssh_keys" : [ "4d:77:38:71:1d:a1:91:66:42:72:79:45:eb:cd:d6:ea" ],
+        "enable_ipv6" : true
+      }
+    },
+    "ipv4_extern":"104.236.47.79/18",
+    "ipv4_addr":"104.236.47.79/18",
+    "ipv4_gw":"104.236.0.1",
+    "ipv6_addr":"2604:a880:800:10::1ee1:a000/64",
+    "ipv6_gw":"2604:a880:800:10::1",
+    "ipv4_intern":"169.254.202.1/24",
+    "ipv6_intern":"2604:a880:800:10::1ee1:a001/124"
+  }],
+  "vips":[
+  {
+    "name":"eu-0",
+    "dialect":"coreos",
+    "ifname":"eth1",
+    "ipv4_extern":"10.24.1.210/24",
+    "ipv4_addr":"10.24.1.210/24",
+    "ipv4_gw":"10.24.1.1",
+    "ipv6_addr":"fd00::10:24:1:210/64",
+    "ipv6_gw":"fd00::10:24:1:1",
+    "ipv4_intern":"169.254.210.1/24",
+    "ipv6_intern":"fd00::169:254:210:1/112"
+  },
+  {
+    "name":"eu-1",
+    "ipv4_extern":"10.24.1.211/24",
+    "ipv4_addr":"10.24.1.211/24",
+    "ipv4_gw":"10.24.1.1",
+    "ipv6_addr":"fd00::10:24:1:211/64",
+    "ipv6_gw":"fd00::10:24:1:1",
+    "ipv4_intern":"169.254.211.1/24",
+    "ipv6_intern":"fd00::169:254:211:1/112"
+  },
+  {
+    "name":"us-0",
+    "ipv4_extern":"10.24.1.212/24",
+    "ipv4_addr":"10.24.1.212/24",
+    "ipv4_gw":"10.24.1.1",
+    "ipv6_addr":"fd00::10:24:1:212/64",
+    "ipv6_gw":"fd00::10:24:1:1",
+    "ipv4_intern":"169.254.212.1/24",
+    "ipv6_intern":"fd00::169:254:212:1/112"
+  }],
+  "certs":{
+    "path":"../../certs/"
+  },
+  "dns":{
+    "path":"../../zones/"
+  },
+  "droplet":{
+    "path":"../../droplets/"
+  },
+  "domain":"protonet.io",
+  "email":"martin@protonet.info",
+  "cerberus":"cerberus"
+}

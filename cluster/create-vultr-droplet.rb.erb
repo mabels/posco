@@ -1,0 +1,19 @@
+#!/usr/bin/env ruby
+#
+require 'json'
+system <<VULTR
+vultr server create -n <%= host.name %> \
+  -r <%=  @service.get_region %> \
+  -p <%=  @service.get_plan %> \
+  -o <%=  @service.get_os %> \
+  --snapshot <%= @service.get_snapshot %>\
+  <%=  @service.get_enable_ipv6 ? "--pv6=true" : "" %>
+VULTR
+
+droplet=%x(vultr servers | grep '<%= host.name %>' | cut -f1)
+
+File.open(File.join(File.dirname(__FILE__), "droplet.json"), 'w') {|f| f.write(droplet.to_json) }
+
+system("cd <%= @service.cluster_rb_directory %> && ruby cluster.rb")
+
+system("/bin/sh #{File.join(File.dirname(__FILE__), "remote-deploy.sh")}")
