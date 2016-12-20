@@ -14,6 +14,8 @@ module Etcd
 
     def activate(context)
       @context = context
+      pbuilder = @context.find_instances_from_type Construqt::Flavour::Nixian::Services::Packager::OncePerHost
+      pbuilder.packages.register(Etcd::Service)
     end
 
     def build_url(host, port)
@@ -103,6 +105,7 @@ module Etcd
         .require(Construqt::Flavour::Nixian::Services::EtcNetworkApplicationUd::Service)
         .require(Construqt::Flavour::Nixian::Services::UpDowner::Service)
         .require(Construqt::Flavour::Nixian::Services::Result::Service)
+        .require(Construqt::Packages::Builder)
         .activator(Construqt::Flavour::Nixian::Services::UpDowner::Activator.new
         .entity(Taste::Entity)
         .add(Construqt::Flavour::Nixian::Tastes::File::Factory, Taste::File))

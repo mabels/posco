@@ -84,44 +84,35 @@ def cluster_json
     "etcbinds":[
     {
     "name":"1",
-    "services": {
-      "DigitalOcean::Service": {
-        "size" : "512mb",
-        "image" : "coreos-beta",
-        "region" : "fra1",
-        "ssh_keys" : [ "af:bd:ed:74:85:81:67:5d:39:7e:e6:50:2b:3e:3a:ff" ],
-        "enable_ipv6" : true
-      }
-    },
     "dialect": "coreos",
-    "ifname": "eth1",
-    "ipv4_extern":"10.24.1.200/24",
-    "ipv4_addr":"10.24.1.200/24",
-    "ipv4_gw":"10.24.1.1",
-    "ipv6_addr":"fd00::10:24:1:200/64",
-    "ipv6_gw":"fd00::10:24:1:1",
+    "ifname": "eth0",
+    "ipv4_extern":"192.168.202.220/24",
+    "ipv4_addr":"192.168.202.220/24",
+    "ipv4_gw":"192.168.202.1",
+    "ipv6_addr":"fd00:202::192:168:202:220/64",
+    "ipv6_gw":"fd00:202::192:168:202:1",
     "ipv4_intern":"169.254.200.1/24",
-    "ipv6_intern":"fd00::169:254:200:1/112"
+    "ipv6_intern":"fd00:202::192:168:200:1/112"
   },
   {
     "name":"2",
-    "ipv4_extern":"10.24.1.201/24",
-    "ipv4_addr":"10.24.1.201/24",
-    "ipv4_gw":"10.24.1.1",
-    "ipv6_addr":"fd00::10:24:1:201/64",
-    "ipv6_gw":"fd00::10:24:1:1",
+    "ipv4_extern":"192.168.202.230/24",
+    "ipv4_addr":"192.168.202.230/24",
+    "ipv4_gw":"192.168.202.1",
+    "ipv6_addr":"fd00:202::192:168:202:230/64",
+    "ipv6_gw":"fd00:202::192:168:202:1",
     "ipv4_intern":"169.254.201.1/24",
-    "ipv6_intern":"fd00::169:254:201:1/112"
+    "ipv6_intern":"fd00:202::192:168:201:1/112"
   },
   {
     "name":"3",
-    "ipv4_extern":"10.24.1.202/24",
-    "ipv4_addr":"10.24.1.202/24",
-    "ipv4_gw":"10.24.1.1",
-    "ipv6_addr":"fd00::10:24:1:202/64",
-    "ipv6_gw":"fd00::10:24:1:1",
+    "ipv4_extern":"192.168.202.240/24",
+    "ipv4_addr":"192.168.202.240/24",
+    "ipv4_gw":"192.168.202.1",
+    "ipv6_addr":"fd00:202::192:168:202:240/64",
+    "ipv6_gw":"fd00::192:168:202:1",
     "ipv4_intern":"169.254.202.1/24",
-    "ipv6_intern":"fd00::169:254:202:1/112"
+    "ipv6_intern":"fd00:202::192:168:202:1/112"
   }],
   "vips":[
   {
@@ -219,6 +210,7 @@ region = setup_region('protonet', network)
 
 firewall(region)
 
+version = SecureRandom.base64[0..20]
 base = 200
 
 def services_parse(srvs)
@@ -293,7 +285,8 @@ etcbinds = get_config_and_pullUp("etcbinds").map do |j|
                'ipv4_addr' => "#{ipv4.to_string.to_s}##{j.name}-DNS_MAPPED",
                'ipv4_gw'   => j.ipv4_intern.to_s,
                'ipv6_addr' => "#{ipv6.to_string}##{j.name}-DNS_MAPPED##{j.name}_DNS_S#DNS_S",
-               'ipv6_gw'   => j.ipv6_intern.to_s)
+               'ipv6_gw'   => j.ipv6_intern.to_s,
+               'version'   => version)
   ipv4 = ipv4.inc
   ipv6 = ipv6.inc
   make_service(region, 'service' => Etcd::Service.new,
@@ -308,7 +301,8 @@ etcbinds = get_config_and_pullUp("etcbinds").map do |j|
                'rndc_key'  => 'total geheim',
                'domains'   => nss.names,
                'ipv6_addr' => "#{ipv6.to_string}##{j.name}-ETCD_MAPPED##{j.name}_ETCD_S#ETCD_S",
-               'ipv6_gw'   => j.ipv6_intern.to_s)
+               'ipv6_gw'   => j.ipv6_intern.to_s,
+               'version'   => version)
   ipv4 = ipv4.inc
   ipv6 = ipv6.inc
   make_service(region, 'service' => Certor::Service.new,
@@ -323,7 +317,8 @@ etcbinds = get_config_and_pullUp("etcbinds").map do |j|
                'ipv4_addr' => "#{ipv4.to_string.to_s}##{j.name}-CERTOR_MAPPED#CERTOR_S",
                'ipv4_gw'   => "169.254.#{base}.1",
                'ipv6_addr' => "#{ipv6.to_string}##{j.name}-CERTOR_MAPPED##{j.name}_CERTOR_S#CERTOR_S",
-               'ipv6_gw'   => j.ipv6_intern.to_s)
+               'ipv6_gw'   => j.ipv6_intern.to_s,
+               'version'   => version)
   base += 1
   ship
 end
@@ -353,7 +348,8 @@ vips = get_config_and_pullUp("vips").map do |j|
                'rndc_key'  => 'total geheim',
                'domains'   => nss.names,
                'ipv6_addr' => "#{ipv6.to_string}#SNIPROXY_S##{j.name}-SNI_MAPPED##{j.name}_SNI_S",
-               'ipv6_gw'   => j.ipv6_intern.to_string)
+               'ipv6_gw'   => j.ipv6_intern.to_string,
+               'version'   => version)
   ipv4 = ipv4.inc
   ipv6 = ipv6.inc
   make_service(region, 'service' => Posco::Service.new,
@@ -366,7 +362,8 @@ vips = get_config_and_pullUp("vips").map do |j|
                'rndc_key'  => 'total geheim',
                'domains'   => nss.names,
                'ipv6_addr' => "#{ipv6.to_string}#POSCO_S##{j.name}-posco##{j.name}-POSCO_MAPPED##{j.name}_POSCO_S",
-               'ipv6_gw'   => j.ipv6_intern.to_string)
+               'ipv6_gw'   => j.ipv6_intern.to_string,
+               'version'   => version)
   ipv4 = ipv4.inc
   ipv6 = ipv6.inc
   tunator_firewall(j.name)

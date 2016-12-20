@@ -15,6 +15,7 @@ def make_service(region, parameter)
                                     .taste(Construqt::Flavour::Nixian::Tastes::File::Factory.new)
 
     docker = Construqt::Flavour::Nixian::Services::Docker::Service.new
+                                    .version(parameter['version'])
                                     .image(parameter['image'])
                                     .pkt_man(parameter['pkt_man']||:apt)
                                     .privileged
