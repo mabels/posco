@@ -10,7 +10,9 @@ vultr server create -n <%= host.name %> \
   <%=  @service.get_enable_ipv6 ? "--pv6=true" : "" %>
 VULTR
 
-droplet=%x(vultr servers | grep '<%= host.name %>' | cut -f1)
+droplet_id=%x(vultr servers | grep '<%= host.name %>' | cut -f1)
+
+droplet=%x(vultr server show #{droplet_id})
 
 File.open(File.join(File.dirname(__FILE__), "droplet.json"), 'w') {|f| f.write(droplet.to_json) }
 
