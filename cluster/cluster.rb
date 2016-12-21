@@ -218,7 +218,7 @@ def services_parse(srvs)
     if key == "DigitalOcean::Service"
       DigitalOcean::Service.from(srv)
     end
-    if key = "Vultr::Service"
+    if key == "Vultr::Service"
       Vultr::Service.from(srv)
     end
   end
