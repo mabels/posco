@@ -215,10 +215,10 @@ base = 200
 
 def services_parse(srvs)
   (srvs||[]).map do |key, srv|
-    if key == "DigitalOcean::Service"
+    if "DigitalOcean::Service" == key
       DigitalOcean::Service.from(srv)
     end
-    if key == "Vultr::Service"
+    if "Vultr::Service" == key
       Vultr::Service.from(srv)
     end
   end
