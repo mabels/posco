@@ -85,6 +85,7 @@ module Etcd
 
     class File
       def on_add(ud, taste, iface, me)
+        binding.pry
         fsrv = @context.find_instances_from_type(Construqt::Flavour::Nixian::Services::EtcNetworkApplicationUd::OncePerHost)
         fsrv.up("/etc/etcd/start.sh")
         fsrv.down("/etc/etcd/stop.sh")

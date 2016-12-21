@@ -85,7 +85,7 @@ def cluster_json
     {
     "name":"1",
     "dialect": "coreos",
-    "ifname": "eth0",
+    "ifname": "enp0s3",
     "ipv4_extern":"192.168.202.220/24",
     "ipv4_addr":"192.168.202.220/24",
     "ipv4_gw":"192.168.202.1",
@@ -96,6 +96,8 @@ def cluster_json
   },
   {
     "name":"2",
+    "dialect": "coreos",
+    "ifname": "enp0s3",
     "ipv4_extern":"192.168.202.230/24",
     "ipv4_addr":"192.168.202.230/24",
     "ipv4_gw":"192.168.202.1",
@@ -106,6 +108,8 @@ def cluster_json
   },
   {
     "name":"3",
+    "dialect": "coreos",
+    "ifname": "enp0s3",
     "ipv4_extern":"192.168.202.240/24",
     "ipv4_addr":"192.168.202.240/24",
     "ipv4_gw":"192.168.202.1",
@@ -210,7 +214,7 @@ region = setup_region('protonet', network)
 
 firewall(region)
 
-version = SecureRandom.base64[0..20]
+version = SecureRandom.base64.gsub(/[^a-zA-Z0-9]/, '')
 base = 200
 
 def services_parse(srvs)
