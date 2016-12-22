@@ -25,19 +25,7 @@ def make_ship(region, parameter)
                                    :description=>"#{host.name} lo",
                                    "address" => region.network.addresses.add_ip(Construqt::Addresses::LOOOPBACK))
       host.configip = host.id ||= Construqt::HostId.create do |my|
-        addr = region.network.addresses
-        if parameter['ipv4_addr'] == "DHCP"
-          addr = addr.add_ip(Construqt::Addresses::DHCPV4)
-        else
-          addr = addr.add_ip(parameter['ipv4_addr'])
-        end
-        if parameter['ipv4_gw']
-          addr = addr.add_route("0.0.0.0/0#INTERNET", parameter['ipv4_gw'])
-        end
-        addr = addr.add_ip(parameter['ipv6_addr'])
-        addr = addr.add_route("2000::/3#INTERNET", parameter['ipv6_gw'])
-        addr = addr.add_route("fd00::/8#INTERNET", parameter['ipv6_gw'])
-
+        addr = DynamicAddress.creator(host, region.network.addresses, parameter)
         my.interfaces << region.interfaces.add_device(host, parameter['ifname'], "mtu" => 1500,
               "address" => addr,
               'proxy_neigh' => Construqt::Tags.resolver_adr_net(parameter['proxy_neigh_host'], parameter['proxy_neigh_net'], Construqt::Addresses::IPV6),

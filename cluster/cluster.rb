@@ -33,6 +33,7 @@ require 'construqt/flavour/nixian/dialect/coreos'
 require_relative 'ship.rb'
 require_relative 'service.rb'
 require_relative 'firewall.rb'
+require_relative 'dynamic_address'
 
 [
  'digital_ocean.rb',
@@ -92,7 +93,7 @@ def cluster_json
     "ipv6_addr":"fd00:202::192:168:202:220/64",
     "ipv6_gw":"fd00:202::192:168:202:1",
     "ipv4_intern":"169.254.200.1/24",
-    "ipv6_intern":"fd00:202::192:168:200:1/112"
+    "ipv6_intern":"fd00:202::169:254:200:1/112"
   },
   {
     "name":"2",
@@ -104,7 +105,7 @@ def cluster_json
     "ipv6_addr":"fd00:202::192:168:202:230/64",
     "ipv6_gw":"fd00:202::192:168:202:1",
     "ipv4_intern":"169.254.201.1/24",
-    "ipv6_intern":"fd00:202::192:168:201:1/112"
+    "ipv6_intern":"fd00:202::169:254:201:1/112"
   },
   {
     "name":"3",
@@ -116,7 +117,7 @@ def cluster_json
     "ipv6_addr":"fd00:202::192:168:202:240/64",
     "ipv6_gw":"fd00::192:168:202:1",
     "ipv4_intern":"169.254.202.1/24",
-    "ipv6_intern":"fd00:202::192:168:202:1/112"
+    "ipv6_intern":"fd00:202::169:254:202:1/112"
   }],
   "vips":[
   {
@@ -293,7 +294,7 @@ etcbinds = get_config_and_pullUp("etcbinds").map do |j|
                'version'   => version)
   ipv4 = ipv4.inc
   ipv6 = ipv6.inc
-  make_service(region, 'service' => Etcd::Service.new,
+  s = make_service(region, 'service' => Etcd::Service.new,
                'mother'    => ship,
                'mother_if' => 'br169',
                'name'      => "etcd-#{j.name}",
@@ -307,6 +308,7 @@ etcbinds = get_config_and_pullUp("etcbinds").map do |j|
                'ipv6_addr' => "#{ipv6.to_string}##{j.name}-ETCD_MAPPED##{j.name}_ETCD_S#ETCD_S",
                'ipv6_gw'   => j.ipv6_intern.to_s,
                'version'   => version)
+  #binding.pry
   ipv4 = ipv4.inc
   ipv6 = ipv6.inc
   make_service(region, 'service' => Certor::Service.new,
