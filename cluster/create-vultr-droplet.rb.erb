@@ -1,6 +1,8 @@
 #!/usr/bin/env ruby
 #
 require 'json'
+require 'yaml'
+
 system <<VULTR
 vultr server create -n <%= host.name %> \
   -r <%=  @service.get_region %> \
@@ -12,7 +14,9 @@ VULTR
 
 droplet_id=%x(vultr servers | grep '<%= host.name %>' | cut -f1)
 
-droplet=%x(vultr server show #{droplet_id})
+droplet_info=%x(vultr server show #{droplet_id})
+
+droplet=YAML.load(droplet_info)
 
 File.open(File.join(File.dirname(__FILE__), "droplet.json"), 'w') {|f| f.write(droplet.to_json) }
 
