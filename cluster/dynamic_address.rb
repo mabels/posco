@@ -1,13 +1,5 @@
 
 module DynamicAddress
-  module Vultr
-    def self.creator(host, addr, parameter)
-    end
-  end
-  module DigitalOcean
-    def self.creator(host, addr, parameter)
-    end
-  end
   def self.creator(host, addr, parameter)
     if parameter['dynamic']
       parameter['dynamic'].creator(host, addr, parameter)

@@ -20,7 +20,8 @@ module Etcd
 
     def build_url(host, port)
       throw "build url missing ipv6" unless host.interfaces['eth0'].address.first_ipv6
-      "https://[#{host.interfaces['eth0'].address.first_ipv6}]:#{port}"
+      #"https://[#{host.interfaces['eth0'].address.first_ipv6}]:#{port}"
+      "https://#{host.fqdn}:#{port}"
     end
 
     def write_etcd_start_sh(result, host, etcd_s)
@@ -33,13 +34,13 @@ module Etcd
     def write_my_cert(result, host)
       domainname = host.fqdn
       cert_pkt = host.region.network.cert_store.find_package(domainname)
-      result.add(Etcd::Service, cert_pkt.cert.content,
+      result.add(Etcd::Service, cert_pkt.certs.map{|i|i.content}.join("\n"),
                       Construqt::Resources::Rights.root_0600(Etcd::Service),
                       "etc", "letsencrypt", "live", domainname, "cert.pem")
       result.add(Etcd::Service, cert_pkt.cacerts.map{|i|i.content}.join("\n"),
                       Construqt::Resources::Rights.root_0600(Etcd::Service),
                       "etc", "letsencrypt", "live", domainname, "fullchain.pem")
-      result.add(Etcd::Service, cert_pkt.key.content,
+      result.add(Etcd::Service, cert_pkt.keys.first.content,
                       Construqt::Resources::Rights.root_0600(Etcd::Service),
                       "etc", "letsencrypt", "live", domainname, "privkey.pem")
     end
@@ -57,8 +58,9 @@ module Etcd
       result.add(Etcd::Service, etcd_s.map do |h|
         domainname = h.fqdn
         cert_pkt = host.region.network.cert_store.find_package(domainname)
-        cert_pkt.cert.content
-      end.join("\n"),
+        cert_pkt.certs.first.content
+      end.join("\n")+
+      host.region.network.cert_store.find_package(etcd_s.first.fqdn).cacerts.map{|i|i.content}.join("\n"),
       Construqt::Resources::Rights.root_0600(Etcd::Service),
       "etc", "etcd", fname)
     end
@@ -77,6 +79,11 @@ module Etcd
       #mynetworks = #{iface.address.first_ipv4.network.to_string} #{iface.address.first_ipv6 && iface.address.first_ipv6.network.to_string}
       #MAINCF
     end
+
+    def post_interfaces
+      up_downer = @context.find_instances_from_type(Construqt::Flavour::Nixian::Services::UpDowner::OncePerHost)
+      up_downer.add(@host, Taste::Entity.new())
+    end
   end
 
   module Taste
@@ -85,13 +92,14 @@ module Etcd
 
     class File
       def on_add(ud, taste, iface, me)
-        binding.pry
+        #binding.pry
         fsrv = @context.find_instances_from_type(Construqt::Flavour::Nixian::Services::EtcNetworkApplicationUd::OncePerHost)
-        fsrv.up("/etc/etcd/start.sh")
-        fsrv.down("/etc/etcd/stop.sh")
+        fsrv.up("/bin/sh /etc/etcd/start.sh")
+        fsrv.down("/bin/sh /etc/etcd/stop.sh")
       end
 
       def activate(ctx)
+        #binding.pry
         @context = ctx
         self
       end
@@ -108,8 +116,8 @@ module Etcd
         .require(Construqt::Flavour::Nixian::Services::Result::Service)
         .require(Construqt::Packages::Builder)
         .activator(Construqt::Flavour::Nixian::Services::UpDowner::Activator.new
-        .entity(Taste::Entity)
-        .add(Construqt::Flavour::Nixian::Tastes::File::Factory, Taste::File))
+          .entity(Taste::Entity)
+          .add(Construqt::Flavour::Nixian::Tastes::File::Factory, Taste::File))
     end
 
     def produce(host, srv_inst, ret)

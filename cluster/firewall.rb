@@ -68,7 +68,7 @@ def firewall(region)
 
   Construqt::Firewalls.add("etcd-srv") do |fw|
     fw.host do |host|
-      host.add.action(Construqt::Firewalls::Actions::ACCEPT).connection.from_net("#INTERNET").to_me.tcp.dport(2789).from_is_outside
+      host.add.action(Construqt::Firewalls::Actions::ACCEPT).connection.from_net("#INTERNET").to_me.tcp.dport(2381).dport(2382).from_is_outside
     end
   end
 
@@ -175,7 +175,7 @@ def mother_firewall(name)
       fwd.add.action(Construqt::Firewalls::Actions::ACCEPT).connection.ipv6
         .from_net("#INTERNET")
         .to_host("##{name}_ETCD_S")
-        .tcp.dport(2789).from_is_outside
+        .tcp.dport(2382).dport(2381).from_is_outside
     end
   end
 end
