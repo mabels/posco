@@ -112,6 +112,15 @@ def cluster_json
     "name":"1",
     "dialect": "coreos",
     "ifname": "enp0s3",
+    "services": {
+      "Vultr::Service" : {
+        "region": "9",
+        "plan": "29",
+        "os": "164",
+        "snapshot": "ccc",
+        "enable_ipv6": true
+      }
+    },
     "ipv4_extern":"192.168.202.220/24",
     "ipv4_addr":"192.168.202.220/24",
     "ipv4_gw":"192.168.202.1",
@@ -124,6 +133,15 @@ def cluster_json
     "name":"2",
     "dialect": "coreos",
     "ifname": "enp0s3",
+    "services": {
+      "DigitalOcean::Service" : {
+        "size": "9",
+        "image": "29",
+        "region": "164",
+        "ssh_keys": "ccc",
+        "enable_ipv6": true
+      }
+    },
     "ipv4_extern":"192.168.202.230/24",
     "ipv4_addr":"192.168.202.230/24",
     "ipv4_gw":"192.168.202.1",
@@ -182,6 +200,9 @@ def cluster_json
   },
   "dns" : {
     "path":"../../dns/"
+  },
+  "droplet" : {
+    "path":"../../droplet/"
   },
   "cerberus": "cetcd",
   "domain":"adviser.com",
@@ -247,9 +268,10 @@ def services_parse(srvs)
   (srvs||[]).map do |key, srv|
     if "DigitalOcean::Service" == key
       DigitalOcean::Service.from(srv)
-    end
-    if "Vultr::Service" == key
+    elsif "Vultr::Service" == key
       Vultr::Service.from(srv)
+    else
+      binding.pry
     end
   end
 end

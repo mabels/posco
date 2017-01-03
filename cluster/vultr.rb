@@ -59,15 +59,18 @@ module Vultr
     end
 
     def build_config_host
-      result = @context.find_instances_from_type(Construqt::Flavour::Nixian::Services::Result::OncePerHost)
-      result.add(self,
-                 Construqt::Util.render(binding, "create-vultr-droplet.rb.erb"),
-                 Construqt::Resources::Rights.root_0755,
-                 "create-vultr-droplet.rb")
-      result.add(self,
-                 Construqt::Util.render(binding, "remove-vultr-droplet.rb.erb"),
-                 Construqt::Resources::Rights.root_0755,
-                 "remove-vultr-droplet.rb")
+      #result = @context.find_instances_from_type(Construqt::Flavour::Nixian::Services::Result::OncePerHost)
+
+      Construqt::Util.write_str(@host.region, Construqt::Util.render(binding, "create-vultr-droplet.rb.erb"),
+                                 @host.name, "create-vultr-droplet.rb")
+#      result.add(Action,
+#                 Construqt::Util.render(binding, "create-vultr-droplet.rb.erb"),
+#                 Construqt::Resources::Rights.root_0755,
+#                 "/create-vultr-droplet.rb")
+#      result.add(Action,
+#                 Construqt::Util.render(binding, "remove-vultr-droplet.rb.erb"),
+#                 Construqt::Resources::Rights.root_0755,
+#                 "/remove-vultr-droplet.rb")
     end
   end
 
@@ -76,7 +79,7 @@ module Vultr
     def start(service_factory)
       @machine ||= service_factory.machine
         .service_type(Service)
-        .require(Construqt::Flavour::Nixian::Services::Result::Service)
+#        .require(Construqt::Flavour::Nixian::Services::Result::Service)
     end
 
     def produce(host, srv_inst, ret)

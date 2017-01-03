@@ -44,15 +44,15 @@ module DigitalOcean
     end
 
     def build_config_host
-      result = @context.find_instances_from_type(Construqt::Flavour::Nixian::Services::Result::OncePerHost)
-      result.add(self,
-                 Construqt::Util.render(binding, "create-digital-ocean-droplet.rb.erb"),
-                 Construqt::Resources::Rights.root_0755,
-                 "create-digital-ocean-droplet.rb")
-      result.add(self,
-                 Construqt::Util.render(binding, "remove-digital-ocean-droplet.rb.erb"),
-                 Construqt::Resources::Rights.root_0755,
-                 "remove-digital-ocean-droplet.rb")
+      #result = @context.find_instances_from_type(Construqt::Flavour::Nixian::Services::Result::OncePerHost)
+      #result.add(self,
+      #           Construqt::Util.render(binding, "create-digital-ocean-droplet.rb.erb"),
+      #           Construqt::Resources::Rights.root_0755,
+      #           "create-digital-ocean-droplet.rb")
+      #result.add(self,
+      #           Construqt::Util.render(binding, "remove-digital-ocean-droplet.rb.erb"),
+      #           Construqt::Resources::Rights.root_0755,
+      #           "remove-digital-ocean-droplet.rb")
     end
   end
 
@@ -61,7 +61,6 @@ module DigitalOcean
     def start(service_factory)
       @machine ||= service_factory.machine
         .service_type(Service)
-        .require(Construqt::Flavour::Nixian::Services::Result::Service)
     end
 
     def produce(host, srv_inst, ret)
@@ -69,3 +68,4 @@ module DigitalOcean
     end
   end
 end
+
