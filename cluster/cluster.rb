@@ -211,6 +211,22 @@ def cluster_json
 JSON
 end
 
+def get_vultr(hostname, region, api_key)
+  @cache ||= {}
+  uri = URI('https://api.vultr.com/v1/server/list')
+  res = @cache[uri]
+  unless res 
+    req = Net::HTTP::Get.new(uri)
+    req['API-Key'] = api_key
+    http = Net::HTTP.new(uri.hostname, uri.port)
+    http.use_ssl = true
+    res = @cache[uri] = http.request(req)
+  end
+  vultr_obj = JSON.parse(res.body).values.find do |data|
+    data['label'] == hostname && data['DCID'] == region
+  end
+end
+
 def get_config
   fname = "#{ENV['USER']}.cfg.json"
   obj = JSON.parse(if File.exists?(fname)
@@ -221,6 +237,24 @@ def get_config
   ["etcbinds","vips"].each do |i|
     obj[i].each do |j|
       hostname = "#{i[0..-2]}-#{j['name']}"
+      #droplet_json = File.join("cfgs",hostname,"create-vultr-droplet.rb")
+      if j['services'] && j['services']['Vultr::Service']
+        o = get_vultr(hostname, j['services']['Vultr::Service']['region'], j['services']['Vultr::Service']['api_key'])
+	if o	
+          host_ip = IPAddress.parse("#{o['main_ip']}/#{o['netmask_v4']}")
+          host_gateway = IPAddress.parse(o['gateway_v4'])
+          j['ipv4_extern'] = host_ip.to_string
+          j['ipv4_addr'] = host_ip.to_string
+          j['ipv4_gateway'] = host_gateway.to_s
+          host_ip = IPAddress.parse("#{o['v6_main_ip']}/#{o['v6_network_size']}")
+          host_gateway = IPAddress.parse(o['v6_network'])
+          j['ipv6_addr'] = host_ip.to_string
+          j['ipv6_gw'] = host_gateway.to_s
+          j['ipv6_intern'] = "#{host_ip.inc.to_s}/#{o['v6_network_size']}"
+	else
+	  puts "Warning. Vultr Server #{hostname} not found"
+	end
+      end
       droplet_json = File.join("cfgs",hostname,"droplet.json")
       if File.exists?(droplet_json)
         droplet = JSON.parse(IO.read(droplet_json))

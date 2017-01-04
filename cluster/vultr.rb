@@ -28,6 +28,8 @@ module Vultr
     chainable_attr_value :region
     chainable_attr_value :snapshot
     chainable_attr_value :enable_ipv6
+    chainable_attr_value :api_key
+    chainable_attr_value :ssh_key_id
     attr_reader :cluster_rb_directory
     def initialize
       @plan = "29"			# 768MB RAM, 15GB SSD, 1 TB BW
@@ -44,6 +46,8 @@ module Vultr
         .region(p['region'])
         .snapshot(p['snapshot'])
         .enable_ipv6(p['enable_ipv6'])
+	.api_key(p['api_key'])
+	.ssh_key_id(p['ssh_key_id'])
     end
   end
 

@@ -1,25 +1,33 @@
 #!/usr/bin/env ruby
-#
-require 'json'
-require 'yaml'
 
+require 'json'
+
+
+
+#if vultr_obj
+#  puts vultr_obj
+#else
 system <<VULTR
 vultr server create -n <%= host.name %> \
   -r <%=  @service.get_region %> \
   -p <%=  @service.get_plan %> \
   -o <%=  @service.get_os %> \
   --snapshot <%= @service.get_snapshot %>\
-  <%=  @service.get_enable_ipv6 ? "--pv6=true" : "" %>
+  <%=  @service.get_enable_ipv6 ? "--ipv6=true" : "" %>\
+  --sshkey=<%= @service.get_ssh_key_id %>
 VULTR
+#end
 
-droplet_id=%x(vultr servers | grep '<%= host.name %>' | cut -f1)
 
-droplet_info=%x(vultr server show #{droplet_id})
 
-droplet=YAML.load(droplet_info)
-
-File.open(File.join(File.dirname(__FILE__), "droplet.json"), 'w') {|f| f.write(droplet.to_json) }
-
-system("cd <%= @service.cluster_rb_directory %> && ruby cluster.rb")
-
-system("/bin/sh #{File.join(File.dirname(__FILE__), "remote-deploy.sh")}")
+##droplet_id=%x(vultr servers | grep '<%= host.name %>' | cut -f1)
+#
+##droplet_info=%x(vultr server show #{droplet_id})
+#
+##droplet=YAML.load(droplet_info)
+#
+##File.open(File.join(File.dirname(__FILE__), "droplet.json"), 'w') {|f| f.write(droplet.to_json) }
+#
+##system("cd <%= @service.cluster_rb_directory %> && ruby cluster.rb")
+#
+##system("/bin/sh #{File.join(File.dirname(__FILE__), "remote-deploy.sh")}")
