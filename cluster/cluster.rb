@@ -227,6 +227,22 @@ def get_vultr(hostname, region, api_key)
   end
 end
 
+def get_vultr_ipv4(subid, api_key)
+  @cache ||= {}
+  uri = URI("https://api.vultr.com/v1/server/list_ipv4?SUBID=#{subid}")
+  res = @cache[uri]
+  unless res
+    req = Net::HTTP::Get.new(uri)
+    req['API-Key'] = api_key
+    http = Net::HTTP.new(uri.hostname, uri.port)
+    http.use_ssl = true
+    res = @cache[uri] = http.request(req)
+  end
+  vultr_obj = JSON.parse(res.body).values.find do |data|
+    data
+  end
+end
+
 def get_config
   fname = "#{ENV['USER']}.cfg.json"
   obj = JSON.parse(if File.exists?(fname)
@@ -240,7 +256,10 @@ def get_config
       #droplet_json = File.join("cfgs",hostname,"create-vultr-droplet.rb")
       if j['services'] && j['services']['Vultr::Service']
         o = get_vultr(hostname, j['services']['Vultr::Service']['region'], j['services']['Vultr::Service']['api_key'])
-	if o	
+	if o
+          subid = "#{o['SUBID']}"
+          ipv4_network = get_vultr_ipv4(subid, j['services']['Vultr::Service']['api_key'])
+          puts ipv4_network
           host_ip = IPAddress.parse("#{o['main_ip']}/#{o['netmask_v4']}")
           host_gateway = IPAddress.parse(o['gateway_v4'])
           j['ipv4_extern'] = host_ip.to_string
