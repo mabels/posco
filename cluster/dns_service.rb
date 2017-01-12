@@ -134,7 +134,6 @@ module Dns
                  Construqt::Util.render(binding, "dns.named.conf.local.erb"),
                  Construqt::Resources::Rights.root_0644(Construqt::Resources::Component::UNREF),
                  "/etc/bind", "named.conf.local")
-      binding.pry
     end
 
     def write_zone_file(host, result, ns, zone)
@@ -161,7 +160,6 @@ module Dns
         ns.zones.each do |zone|
           zones.push(zone)
           write_zone_file(host, result, ns, zone)
-          binding.pry
         end
       end
       write_named_conf_local(host, result, zones)
