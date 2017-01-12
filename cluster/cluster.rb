@@ -365,9 +365,9 @@ etcbinds = get_config_and_pullUp("etcbinds").map do |j|
                    'ipv6_gw'   => j.ipv6_gw.to_s,
                    'ipv4_intern' => j.ipv4_intern.to_string,
                    'ipv6_intern' => "#{j.ipv6_intern.to_string}##{j.name}_GW_S#GW_S")
-  ipv4 = j.ipv4_intern.inc
+  ipv4 = j.ipv4_intern.inc # 1 + 1 = 2
 #binding.pry
-  ipv6 = j.ipv6_intern.network.inc
+  ipv6 = j.ipv6_intern.network.inc.inc # 0 + 1 + 1 = 2
   make_service(region, 'service' => Dns::Service.new(get_config['dns']),
                'mother'    => ship,
                'mother_if' => 'br169',

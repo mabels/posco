@@ -38,7 +38,7 @@ def make_ship(region, parameter)
                    "interfaces" => [],
                    "address" => region.network.addresses
                         .add_ip(parameter['ipv4_intern'])
-                        .add_ip("#{parameter['ipv6_intern']}#INTERNAL-NET"))
+                        .add_ip("#{parameter['ipv6_intern']}#INTERNAL-NET#ETCD_CLIENTS"))
     end
 end
 
