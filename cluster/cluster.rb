@@ -40,6 +40,7 @@ require_relative 'dynamic_address'
  'vultr.rb',
  'dns_service.rb',
  'etcd_service.rb',
+ 'locksmithd_service.rb',
  'certor_service.rb',
  'posco_service.rb',
  'sni_proxy_service.rb',
@@ -56,6 +57,7 @@ def setup_region(name, network)
   nixian.services_factory.add(Vultr::Factory.new)
   nixian.services_factory.add(Dns::Factory.new)
   nixian.services_factory.add(Etcd::Factory.new)
+  nixian.services_factory.add(LockSmithd::Factory.new)
   nixian.services_factory.add(Certor::Factory.new)
   nixian.services_factory.add(SniProxy::Factory.new)
   nixian.services_factory.add(Posco::Factory.new)
@@ -351,7 +353,7 @@ etcbinds = get_config_and_pullUp("etcbinds").map do |j|
   #binding.pry
   mother_firewall(j.name)
   ship = make_ship(region,
-                   'services' => j.services,
+                   'services' => j.services + [LockSmithd::Service.new()],
                    'name' => "etcbind-#{j.name}",
                    'firewalls' => ["#{j.name}-ipv4-map-dns", "#{j.name}-ipv4-map-certor","#{j.name}-ipv6-etcd"],
                    'ifname'    => j.ifname||'enp0s8',
