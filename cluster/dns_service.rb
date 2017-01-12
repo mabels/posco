@@ -1,15 +1,20 @@
 class DnsZone
-  attr_reader :name, :fname, :content
-  def initialize(zname, fname, content)
+  attr_reader :name, :fname, :content, :keycontent
+  def initialize(zname, fname, content, keycontent)
     @name = zname
     @fname = fname
     @content = content
+    @keycontent = keycontent
   end
 
   def self.load(fname)
     zname = File.basename(fname)[0..-(".static.zone".length + 1)]
     content = IO.read(fname)
-    ret = DnsZone.new(zname, fname, content)
+    keyfile = File.join(File.dirname(fname),"#{zname}.key")
+    unless File.file?(keyfile)
+      %x( rndc-confgen -b 512 -a -c #{keyfile} -k #{zname}-key -A hmac-sha512 )
+    end
+    ret = DnsZone.new(zname, fname, content, IO.read(keyfile))
   end
 end
 
@@ -129,6 +134,7 @@ module Dns
                  Construqt::Util.render(binding, "dns.named.conf.local.erb"),
                  Construqt::Resources::Rights.root_0644(Construqt::Resources::Component::UNREF),
                  "/etc/bind", "named.conf.local")
+      binding.pry
     end
 
     def write_zone_file(host, result, ns, zone)
@@ -155,6 +161,7 @@ module Dns
         ns.zones.each do |zone|
           zones.push(zone)
           write_zone_file(host, result, ns, zone)
+          binding.pry
         end
       end
       write_named_conf_local(host, result, zones)

@@ -246,12 +246,12 @@ def get_config
           host_gateway = IPAddress.parse(o['gateway_v4'])
           j['ipv4_extern'] = host_ip.to_string
           j['ipv4_addr'] = host_ip.to_string
-          j['ipv4_gateway'] = host_gateway.to_s
+          j['ipv4_gw'] = host_gateway.to_s
           host_ip = IPAddress.parse("#{o['v6_main_ip']}/#{o['v6_network_size']}")
           host_gateway = IPAddress.parse(o['v6_network'])
           j['ipv6_addr'] = host_ip.to_string
-          j['ipv6_gw'] = host_gateway.to_s
-          j['ipv6_intern'] = "#{host_ip.inc.to_s}/#{o['v6_network_size']}"
+          #j['ipv6_gw'] = host_gateway.to_s
+          j['ipv6_intern'] = IPAddress.parse("#{host_ip.network.to_s}ffff:ffff/112").to_string
 	else
 	  puts "Warning. Vultr Server #{hostname} not found"
 	end
@@ -264,14 +264,14 @@ def get_config
           host_gateway = IPAddress.parse(addr['gateway'])
           j['ipv4_extern'] = host_ip.to_string
           j['ipv4_addr'] = host_ip.to_string
-          j['ipv4_gateway'] = host_gateway.to_s
+          j['ipv4_gw'] = host_gateway.to_s
         end
         droplet['networks']['v6'].each do |addr|
           host_ip = IPAddress.parse("#{addr['ip_address']}/#{addr['netmask']}")
           host_gateway = IPAddress.parse(addr['gateway'])
           j['ipv6_addr'] = host_ip.to_string
-          j['ipv6_gw'] = host_gateway.to_s
-          j['ipv6_intern'] = "#{host_ip.inc.to_s}/124"
+          #j['ipv6_gw'] = host_gateway.to_s
+          j['ipv6_intern'] = IPAddress.parse("#{host_ip.network.to_s}ffff:ffff/112").to_string
         end
       end
     end
@@ -364,7 +364,8 @@ etcbinds = get_config_and_pullUp("etcbinds").map do |j|
                    'ipv4_intern' => j.ipv4_intern.to_string,
                    'ipv6_intern' => "#{j.ipv6_intern.to_string}##{j.name}_GW_S#GW_S")
   ipv4 = j.ipv4_intern.inc
-  ipv6 = j.ipv6_intern.inc
+#binding.pry
+  ipv6 = j.ipv6_intern.network.inc
   make_service(region, 'service' => Dns::Service.new(get_config['dns']),
                'mother'    => ship,
                'mother_if' => 'br169',
@@ -378,7 +379,7 @@ etcbinds = get_config_and_pullUp("etcbinds").map do |j|
                'ipv4_addr' => "#{ipv4.to_string.to_s}##{j.name}-DNS_MAPPED",
                'ipv4_gw'   => j.ipv4_intern.to_s,
                'ipv6_addr' => "#{ipv6.to_string}##{j.name}-DNS_MAPPED##{j.name}_DNS_S#DNS_S",
-               'ipv6_gw'   => j.ipv6_intern.to_s,
+               'ipv6_gw'   => j.ipv6_intern.to_string,
                'version'   => version)
   ipv4 = ipv4.inc
   ipv6 = ipv6.inc
@@ -396,7 +397,7 @@ etcbinds = get_config_and_pullUp("etcbinds").map do |j|
                'ipv4_addr' => "#{ipv4.to_string.to_s}",
                'ipv4_gw'   => j.ipv4_intern.to_s,
                'ipv6_addr' => "#{ipv6.to_string}##{j.name}-ETCD_MAPPED##{j.name}_ETCD_S#ETCD_S",
-               'ipv6_gw'   => j.ipv6_intern.to_s,
+               'ipv6_gw'   => j.ipv6_intern.to_string,
                'version'   => version)
   #binding.pry
   ipv4 = ipv4.inc
