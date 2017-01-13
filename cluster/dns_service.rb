@@ -114,7 +114,7 @@ module Dns
       @nss = NameServerSets.load(fname)
     end
   end
- 
+
   class Action
     attr_reader :host
     def initialize(service, host)
@@ -124,6 +124,7 @@ module Dns
 
     def dns_records(zone)
       ret = []
+      skip_dns = Construqt::Tags.find("SKIP_DNS")
       @host.region.hosts.get_hosts.each do |host|
         next unless host.domain == zone
         #binding.pry
@@ -132,8 +133,12 @@ module Dns
         if host.mother
           cip = host.mother.configip
         end
-        cip.first_ipv4! && ret.push("#{host.fqdn}.         3600 IN A #{cip.first_ipv4!.first_ipv4.to_s}")
-        cip.first_ipv6! && ret.push("#{host.fqdn}.         3600 IN AAAA #{cip.first_ipv6!.first_ipv6.to_s}")
+        if cip.first_ipv4! && !skip_dns.find{|i| i == @host.configip.first_ipv4.first_ipv4 }
+          ret.push("#{host.fqdn}.         3600 IN A #{cip.first_ipv4.first_ipv4.to_s}")
+        end
+        if cip.first_ipv6! && !skip_dns.find{|i| i == @host.configip.first_ipv6.first_ipv6 }
+          ret.push("#{host.fqdn}.         3600 IN AAAA #{cip.first_ipv6.first_ipv6.to_s}")
+        end
       end
       ret
     end
