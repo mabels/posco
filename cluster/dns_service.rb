@@ -122,6 +122,22 @@ module Dns
       @host = host
     end
 
+    def dns_records(zone)
+      ret = []
+      @host.region.hosts.get_hosts.each do |host|
+        next unless host.domain == zone
+        #binding.pry
+        puts "#{host.fqdn} gets his DNS Records"
+        cip = host.configip
+        if host.mother
+          cip = host.mother.configip
+        end
+        cip.first_ipv4! && ret.push("#{host.fqdn}.         3600 IN A #{cip.first_ipv4!.first_ipv4.to_s}")
+        cip.first_ipv6! && ret.push("#{host.fqdn}.         3600 IN AAAA #{cip.first_ipv6!.first_ipv6.to_s}")
+      end
+      ret
+    end
+
     def write_named_conf_options(host, result)
       result.add(Dns::Service,
                  Construqt::Util.render(binding, "dns.named.conf.options.erb"),
