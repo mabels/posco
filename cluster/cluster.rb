@@ -423,6 +423,7 @@ etcbinds = get_config_and_pullUp("etcbinds").map do |j|
 end
 
 vips = get_config_and_pullUp("vips").map do |j|
+  #mother_firewall(j.name)
   ship = make_ship(region, 'name' => "vips-#{j.name}",
                    'ifname'    => j.ifname||'enp0s8',
                    'dialect'   => j.dialect,
@@ -446,6 +447,8 @@ vips = get_config_and_pullUp("vips").map do |j|
                'ifname'    => 'eth0',
                'rndc_key'  => 'total geheim',
                'domains'   => nss.names,
+               'ipv4_addr' => "#{ipv4.to_string}#SNIPROXY_S##{j.name}-SNI_MAPPED##{j.name}_SNI_S",
+               'ipv4_gw'   => j.ipv4_intern.to_string,
                'ipv6_addr' => "#{ipv6.to_string}#SNIPROXY_S##{j.name}-SNI_MAPPED##{j.name}_SNI_S",
                'ipv6_gw'   => j.ipv6_intern.to_string,
                'version'   => version)
@@ -460,6 +463,8 @@ vips = get_config_and_pullUp("vips").map do |j|
                'ifname'    => 'eth0',
                'rndc_key'  => 'total geheim',
                'domains'   => nss.names,
+               'ipv4_addr' => "#{ipv4.to_string}",
+               'ipv4_gw'   => j.ipv4_intern.to_string,
                'ipv6_addr' => "#{ipv6.to_string}#POSCO_S##{j.name}-posco##{j.name}-POSCO_MAPPED##{j.name}_POSCO_S",
                'ipv6_gw'   => j.ipv6_intern.to_string,
                'version'   => version)
