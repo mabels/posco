@@ -5,7 +5,8 @@ import {IpStore,IpAssigned,IpEntry} from "../src/ip_store";
 import IPAddress from 'ipaddress';
 
 describe('IpStore', () => {
-  it("findFree", () => {
+  it("findFree", function(done) {
+    this.timeout(100000);
     let ips = IpStore.fromJson({
         ipv4Range: [["192.168.176.100/24", "192.168.176.200/24"]],
         ipv6Range: [["fd00::100/112", "fd00::164/112"]],
@@ -41,5 +42,6 @@ describe('IpStore', () => {
     // free one
     // find one != null
     // find one == null
+    done();
   });
 });
