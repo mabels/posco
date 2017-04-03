@@ -1,7 +1,5 @@
 const fs = require('fs');
 const node_modules = fs.readdirSync('node_modules').filter(x => x !== '.bin');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
-const ExtractTextPlugin = require('extract-text-webpack-plugin');
 const globby = require('globby');
 
 fs.writeFileSync('test/all.ts',
@@ -23,14 +21,14 @@ module.exports = [
     loaders: [
       {
         test: /\.tsx?$/,
-        loader: 'awesome-typescript?useBabel=true'
+        loader: 'awesome-typescript-loader?useBabel=false'
       }
     ]
   },
   externals: node_modules,
   devtool: 'source-map',
   resolve: {
-    extensions: ['', '.ts', '.webpack.js', '.web.js', '.js']
+    extensions: ['.ts', '.webpack.js', '.web.js', '.js']
   }
 },{
   target: 'node',
@@ -44,17 +42,13 @@ module.exports = [
     loaders: [
       {
         test: /\.tsx?$/,
-        loader: 'awesome-typescript?useBabel=true'
-      },
-      {
-        test: /\.less$/,
-        loader: 'style!css!less'
+        loader: 'awesome-typescript-loader?useBabel=false'
       }
     ]
   },
   externals: node_modules,
   devtool: 'source-map',
   resolve: {
-    extensions: ['', '.tsx', '.ts', '.webpack.js', '.web.js', '.js']
+    extensions: ['.ts', '.webpack.js', '.web.js', '.js']
   }
 }];
